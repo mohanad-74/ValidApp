@@ -177,7 +177,6 @@
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date & Stage</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Scale & Ver</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Durations & Report</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Reason / Notes</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                                 <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
@@ -278,34 +277,7 @@
                     </div>
 
                     <div>
-                       <!-- Duration & Study Parameters -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4 col-span-2">
-    <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">DHT Duration</label>
-        <input type="text" id="dhtDuration" class="w-full p-2 border border-gray-300 rounded-md text-sm" placeholder="e.g., 24 Hours">
-    </div>
-    <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">CHT Duration</label>
-        <input type="text" id="chtDuration" class="w-full p-2 border border-gray-300 rounded-md text-sm" placeholder="e.g., 7 Days">
-    </div>
-    <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Campaign Length</label>
-        <input type="text" id="campaignLength" class="w-full p-2 border border-gray-300 rounded-md text-sm" placeholder="e.g., 10 Batches / 30 Days">
-    </div>
-</div>
-
-<!-- PDF File Upload -->
-<div class="col-span-2">
-    <label class="block text-sm font-medium text-gray-700 mb-1">Attach Study PDF Report</label>
-    <input type="file" id="pdfAttachment" accept="application/pdf" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-primary hover:file:bg-blue-100">
-    <div id="existingPdfContainer" class="mt-2 hidden">
-        <a id="existingPdfLink" target="_blank" class="text-xs text-blue-600 underline font-semibold flex items-center gap-1">
-            <i class="fas fa-file-pdf text-red-500"></i> View Attached PDF
-        </a>
-    </div>
-</div>
-
-<label class="block text-sm font-medium text-gray-700 mb-1">Reason for Validation / Study *</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Reason for Validation / Study *</label>
                         <textarea id="reason" rows="2" class="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" required placeholder="Why is this study being conducted?"></textarea>
                     </div>
 
@@ -343,13 +315,8 @@
                     </div>
                     <div class="flex-grow min-w-[150px]">
                         <label class="block text-xs font-medium text-gray-700 mb-1">Privilege Role *</label>
-<select id="newRole" class="w-full p-2 border border-gray-300 rounded text-sm" required>
-    <option value="Administrator">Administrator (Full Access & Users)</option>
-    <option value="Creator">Creator (Add & Edit Records)</option>
-    <option value="Reviewer">Reviewer (QC / Production Review)</option>
-    <option value="QA Manager">QA Manager (Final Approval)</option>
-    <option value="Viewer">Viewer (Read-Only Completed Studies)</option>
-</select>                            <option value="Administrator">Administrator (Add/Edit)</option>
+                        <select id="newRole" class="w-full p-2 border border-gray-300 rounded text-sm" required>
+                            <option value="Administrator">Administrator (Add/Edit)</option>
                             <option value="Section Head">Section Head (Review)</option>
                             <option value="QA Manager">QA Manager (Approve)</option>
                         </select>
@@ -477,13 +444,11 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
         // =========================================================
 
         // --- CONSTANTS ---
-       const ROLES = {
-    ADMIN: 'Administrator',
-    CREATOR: 'Creator',
-    REVIEWER: 'Reviewer',
-    APPROVER: 'QA Manager',
-    VIEWER: 'Viewer'
-};
+        const ROLES = {
+            ADMIN: 'Administrator',
+            REVIEWER: 'Section Head',
+            APPROVER: 'QA Manager'
+        };
 
         const STATUS = {
             DRAFT: 'Draft',
@@ -741,12 +706,8 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
             const statusFilter = ui.filterStatus.value;
 
             const filteredRecords = records.filter(r => {
-    // Hide non-approved records from Viewer role
-    if (currentUser.role === ROLES.VIEWER && r.status !== STATUS.APPROVED) {
-        return false;
-    }
-    const matchCategory = r.studyCategory === currentTabCategory;
-    const matchQuery = r.productName.toLowerCase().includes(query) || (r.productType && r.productType.toLowerCase().includes(query));
+                const matchCategory = r.studyCategory === currentTabCategory;
+                const matchQuery = r.productName.toLowerCase().includes(query) || (r.productType && r.productType.toLowerCase().includes(query));
                 const matchStage = stageFilter === 'All' || r.stage === stageFilter;
                 const matchScale = scaleFilter === 'All' || r.scale === scaleFilter;
                 const matchStatus = statusFilter === 'All' || r.status === statusFilter;
@@ -794,44 +755,8 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
                         `<span class="text-gray-400 text-xs"><i class="fas fa-lock"></i> Locked</span>` : 
                         `<span class="text-gray-400 text-xs">No Actions</span>`;
                 }
-let pdfButton = record.pdfData 
-    ? `<a href="${record.pdfData}" target="_blank" class="inline-flex items-center text-xs text-red-600 hover:text-red-800 font-bold gap-1 mt-1"><i class="fas fa-file-pdf text-lg"></i> View PDF</a>`
-    : `<span class="text-xs text-gray-400">No PDF</span>`;
+
                 tr.innerHTML = `
-    <td class="px-4 py-3 text-sm text-gray-900 font-medium">
-        ${record.productName}
-        <div class="text-xs text-gray-500 font-normal">${record.productType}</div>
-    </td>
-    <td class="px-4 py-3 text-xs text-gray-600">
-        <span class="bg-gray-100 px-2 py-1 rounded border">${record.studyCategory}</span>
-    </td>
-    <td class="px-4 py-3 text-xs text-gray-600">
-        <div>${record.date}</div>
-        <div class="font-semibold text-gray-800 mt-1">${record.stage}</div>
-    </td>
-    <td class="px-4 py-3 text-xs text-gray-600">
-        <div>${record.scale}</div>
-        <div class="mt-1"><span class="bg-blue-100 text-blue-800 px-1 rounded">${record.version}</span></div>
-    </td>
-    <td class="px-4 py-3 text-xs text-gray-600">
-        <div><strong>DHT:</strong> ${record.dhtDuration || 'N/A'}</div>
-        <div><strong>CHT:</strong> ${record.chtDuration || 'N/A'}</div>
-        <div><strong>Campaign:</strong> ${record.campaignLength || 'N/A'}</div>
-        <div class="mt-1">${pdfButton}</div>
-    </td>
-    <td class="px-4 py-3 text-xs text-gray-500 max-w-[180px] truncate" title="${record.reason}\nNotes: ${record.notes || 'N/A'}">
-        <div class="font-medium text-gray-700 truncate">${record.reason}</div>
-        <div class="text-gray-400 truncate mt-1">${record.notes || 'No extra notes'}</div>
-    </td>
-    <td class="px-4 py-3 whitespace-nowrap">
-        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full border ${getStatusColor(record.status)}">
-            ${record.status}
-        </span>
-    </td>
-    <td class="px-4 py-3 whitespace-nowrap text-center text-sm font-medium">
-        <div class="flex justify-center items-center gap-1">${actionButtons}</div>
-    </td>
-`;
                     <td class="px-4 py-3 text-sm text-gray-900 font-medium">
                         ${record.productName}
                         <div class="text-xs text-gray-500 font-normal">${record.productType}</div>
@@ -923,16 +848,8 @@ let pdfButton = record.pdfData
                 ui.dashboardSection.classList.replace('hidden', 'flex');
                 ui.userInfo.classList.replace('hidden', 'flex');
 
-                // Show Add Record button only to Admin & Creator
-ui.addRecordBtn.classList.toggle('hidden', currentUser.role !== ROLES.ADMIN && currentUser.role !== ROLES.CREATOR);
-
-// Show User Management button only to Administrator
-ui.userManagementBtn.classList.toggle('hidden', currentUser.role !== ROLES.ADMIN);
-
-// Hide Audit Trail from Viewers and Creators
-if (ui.auditTrailBtn) {
-    ui.auditTrailBtn.classList.toggle('hidden', currentUser.role === ROLES.VIEWER || currentUser.role === ROLES.CREATOR);
-}
+                ui.addRecordBtn.classList.toggle('hidden', user.role !== ROLES.ADMIN);
+                ui.userManagementBtn.classList.toggle('hidden', user.role !== ROLES.ADMIN);
                 ui.auditTrailBtn.classList.toggle('hidden', user.role !== ROLES.ADMIN && user.role !== ROLES.APPROVER);
 
                 switchTab(CATEGORIES.PROCESS); 
@@ -1013,62 +930,52 @@ if (ui.auditTrailBtn) {
         // --- Form Submissions & Actions ---
 
         ui.recordForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const id = document.getElementById('recordId').value;
-    const fileInput = document.getElementById('pdfAttachment');
-    let existingRecord = id ? records.find(r => r.id === id) : null;
-    let pdfData = existingRecord?.pdfData || null;
+            e.preventDefault();
+            
+            const id = document.getElementById('recordId').value;
+            const data = {
+                productName: document.getElementById('productName').value,
+                studyCategory: document.getElementById('studyCategory').value,
+                productType: document.getElementById('productType').value,
+                date: document.getElementById('studyDate').value,
+                stage: document.getElementById('stage').value,
+                status: document.getElementById('studyStatus').value,
+                version: document.getElementById('version').value,
+                scale: document.getElementById('scale').value,
+                reason: document.getElementById('reason').value,
+                notes: document.getElementById('notes').value
+            };
 
-    // Convert attached PDF to Base64 string for database storage
-    if (fileInput && fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        pdfData = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (event) => resolve(event.target.result);
-            reader.readAsDataURL(file);
+            if (id) {
+                // Edit
+                const record = records.find(r => r.id === id);
+                if (record) {
+                    const updatedRecord = { ...record, ...data };
+                    if(db) await setDoc(getDocRef('records', id), updatedRecord);
+                    logAction('Edited Data', data.productName, `Updated Stage: ${data.stage}, Ver: ${data.version}, Status: ${data.status}.`, updatedRecord);
+                    showMessage('Success', 'Record updated successfully.', 'success');
+                }
+            } else {
+                // Add
+                const newRecord = {
+                    id: generateId(),
+                    ...data,
+                    createdBy: currentUser.username,
+                    createdAt: new Date().toISOString()
+                };
+                if (db) {
+                    await setDoc(getDocRef('records', newRecord.id), newRecord);
+                } else {
+                    records.unshift(newRecord);
+                }
+                
+                logAction('Added Record', data.productName, `Added as ${data.stage}, Ver: ${data.version}.`, newRecord);
+                showMessage('Success', 'New record added successfully.', 'success');
+            }
+
+            ui.recordModal.classList.remove('active');
+            if(!db) renderTable(); 
         });
-    }
-
-    const data = {
-        productName: document.getElementById('productName').value,
-        studyCategory: document.getElementById('studyCategory').value,
-        productType: document.getElementById('productType').value,
-        date: document.getElementById('studyDate').value,
-        stage: document.getElementById('stage').value,
-        status: document.getElementById('studyStatus').value,
-        version: document.getElementById('version').value,
-        scale: document.getElementById('scale').value,
-        dhtDuration: document.getElementById('dhtDuration')?.value || '',
-        chtDuration: document.getElementById('chtDuration')?.value || '',
-        campaignLength: document.getElementById('campaignLength')?.value || '',
-        reason: document.getElementById('reason').value,
-        notes: document.getElementById('notes')?.value || '',
-        pdfData: pdfData
-    };
-
-    if (id) {
-        if (existingRecord) {
-            const updatedRecord = { ...existingRecord, ...data };
-            if (db) await setDoc(getDocRef('records', id), updatedRecord);
-            logAction('Edited Data', data.productName, `Updated Stage: ${data.stage}, Ver: ${data.version}`, updatedRecord);
-            showMessage('Success', 'Record updated successfully.', 'success');
-        }
-    } else {
-        const newRecord = {
-            id: generateId(),
-            ...data,
-            createdBy: currentUser.username,
-            createdAt: new Date().toISOString()
-        };
-        if (db) await setDoc(getDocRef('records', newRecord.id), newRecord);
-        logAction('Added Record', data.productName, `Added as ${data.stage}`, newRecord);
-        showMessage('Success', 'New record added successfully.', 'success');
-    }
-
-    ui.recordModal.classList.remove('active');
-    renderTable();
-});
 
         window.processAction = (id, newStatus, isReject = false) => {
             const record = records.find(r => r.id === id);
