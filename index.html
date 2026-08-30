@@ -745,33 +745,28 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
                 tr.className = 'hover:bg-gray-50 transition-colors';
                 
                 let actionButtons = '';
-                
-                if (currentUser.role === ROLES.ADMIN) {
-                    actionButtons += `<button onclick="editRecord('${record.id}')" class="text-blue-600 hover:text-blue-900 mx-1 p-1" title="Edit Data"><i class="fas fa-edit"></i></button>`;
-                    if (record.status === STATUS.DRAFT) {
-                        actionButtons += `<button onclick="processAction('${record.id}', '${STATUS.PENDING_REVIEW}')" class="text-purple-600 hover:text-purple-900 mx-1 p-1 bg-purple-50 rounded border border-purple-200" title="Submit for Review"><i class="fas fa-paper-plane"></i></button>`;
-                    }
-                }
+        const userRole = currentUser?.role || '';
 
-                if (currentUser.role === ROLES.REVIEWER && (record.status === STATUS.PENDING_REVIEW || record.status === STATUS.REJECTED)) {
-                    actionButtons += `
-                        <button onclick="processAction('${record.id}', '${STATUS.REVIEWED}')" class="text-indigo-600 hover:text-indigo-900 mx-1 p-1 bg-indigo-50 rounded border border-indigo-200" title="Mark Reviewed"><i class="fas fa-check"></i></button>
-                        <button onclick="processAction('${record.id}', '${STATUS.REJECTED}', true)" class="text-red-600 hover:text-red-900 mx-1 p-1 bg-red-50 rounded border border-red-200" title="Reject"><i class="fas fa-times"></i></button>
-                    `;
-                }
+        // Section Head or Admin can Review records in Pending Review status
+        if ((userRole === 'Section Head' || userRole === 'Admin') && record.status === STATUS.PENDING_REVIEW) {
+            actionButtons += `
+                <button onclick="processAction('${record.id}', '${STATUS.REVIEWED}')" class="text-blue-600 hover:text-blue-800 font-semibold text-xs mr-2" title="Review Record">
+                    <i class="fas fa-check-circle mr-1"></i>Review
+                </button>
+            `;
+        }
 
-               if (canApprove(currentUser) && record.status === STATUS.REVIEWED) {
-                   actionButtons += `
-              <button onclick="processAction('${record.id}', '${STATUS.APPROVED}')" class="text-green-600 hover:text-green-900 mx-1 p-1 bg-green-50 rounded border border-green-200" title="Approve"><i class="fas fa-check-double"></i></button>
-              <button onclick="processAction('${record.id}', '${STATUS.REJECTED}', true)" class="text-red-600 hover:text-red-900 mx-1 p-1 bg-red-50 rounded border border-red-200" title="Reject"><i class="fas fa-times"></i></button>
-                    `;
-                }
-                
-                if (!actionButtons) {
-                    actionButtons = record.status === STATUS.APPROVED ? 
-                        `<span class="text-gray-400 text-xs"><i class="fas fa-lock"></i> Locked</span>` : 
-                        `<span class="text-gray-400 text-xs">No Actions</span>`;
-                }
+        // QA Manager, Deputy QA Manager, or Admin can Approve or Reject records in Reviewed status
+        if ((userRole === 'QA Manager' || userRole === 'Deputy QA Manager' || userRole === 'Admin') && record.status === STATUS.REVIEWED) {
+            actionButtons += `
+                <button onclick="processAction('${record.id}', '${STATUS.APPROVED}')" class="text-green-600 hover:text-green-800 font-semibold text-xs mr-2" title="Approve Record">
+                    <i class="fas fa-check-double mr-1"></i>Approve
+                </button>
+                <button onclick="processAction('${record.id}', '${STATUS.REJECTED}', true)" class="text-red-600 hover:text-red-800 font-semibold text-xs" title="Reject Record">
+                    <i class="fas fa-times-circle mr-1"></i>Reject
+                </button>
+            `;
+        }
 
                tr.innerHTML = `
     <td class="px-4 py-3 text-sm text-gray-900 font-medium">
