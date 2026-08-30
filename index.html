@@ -1031,11 +1031,11 @@ createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.userna
                 updates.approvedBy = activeUser;
             }
 
-            // Update UI state immediately
+            // 1. Immediately update UI state
             Object.assign(record, updates);
             if (typeof renderTable === 'function') renderTable();
 
-            // Persist to Firebase if connected
+            // 2. Persist to Firebase if connected
             if (typeof db !== 'undefined' && db && typeof updateDoc === 'function' && typeof getDocRef === 'function') {
                 await updateDoc(getDocRef('records', id), updates);
             }
@@ -1054,6 +1054,11 @@ createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.userna
     } else {
         if (confirm(confirmMsg)) handleUpdate();
     }
+};
+
+        logAction(`${actionName} Record`, record.productName, `Status: ${newStatus}`, updatedRecord);
+        showMessage('Success', `Record updated to ${newStatus}.`, 'success');
+    });
 };
 
         window.editRecord = (id) => {
