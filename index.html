@@ -1026,15 +1026,27 @@ createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.userna
         `Are you sure you want to mark ${record.productName} as ${newStatus}?`;
 
     showConfirm(`Confirm ${actionName}`, confirmMsg, isReject, async (reason) => {
-        const updatedRecord = { ...record, ...updatePayload };
-        if (reason) updatedRecord.rejectionReason = reason;
+        try {
+            const updatedRecord = { ...record, ...updatePayload };
+            if (reason) updatedRecord.rejectionReason = reason;
 
-        if (db) {
-            await updateDoc(getDocRef('records', id), updatedRecord);
-        } else {
+            // 1. Save to Firebase database if connected
+            if (typeof db !== 'undefined' && db) {
+                await updateDoc(getDocRef('records', id), updatePayload);
+            }
+
+            // 2. Always update local record array & refresh UI
             Object.assign(record, updatedRecord);
             renderTable();
+
+            logAction(`${actionName} Record`, record.productName, `Status: ${newStatus}`, updatedRecord);
+            showMessage('Success', `Record status updated to ${newStatus}.`, 'success');
+        } catch (error) {
+            console.error('Error updating status:', error);
+            showMessage('Error', 'Failed to update record status.', 'error');
         }
+    });
+};
 
         logAction(`${actionName} Record`, record.productName, `Status: ${newStatus}`, updatedRecord);
         showMessage('Success', `Record updated to ${newStatus}.`, 'success');
