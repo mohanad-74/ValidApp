@@ -1010,7 +1010,7 @@ window.returnRecordToCreator = async (recordId) => {
         console.error('Record not found for ID:', recordId);
     }
 };
-        // Global handler to open edit modal for returned records
+// Global handler to open edit modal for returned records
 window.openEditModal = (recordId) => {
     const record = records.find(r => String(r.id) === String(recordId));
     if (!record) {
@@ -1018,30 +1018,37 @@ window.openEditModal = (recordId) => {
         return;
     }
 
-    // Show return feedback comment if present
+    // 1. Show return feedback comment
     if (record.returnComment) {
         alert(`Return Feedback from ${record.returnedBy || 'Reviewer'}:\n\n"${record.returnComment}"`);
     }
 
-    // Populate form fields
-    document.getElementById('recordId').value = record.id;
-    if (document.getElementById('productName')) document.getElementById('productName').value = record.productName || '';
-    if (document.getElementById('studyCategory')) document.getElementById('studyCategory').value = record.studyCategory || '';
-    if (document.getElementById('productType')) document.getElementById('productType').value = record.productType || '';
-    if (document.getElementById('studyDate')) document.getElementById('studyDate').value = record.date || '';
-    if (document.getElementById('stage')) document.getElementById('stage').value = record.stage || '';
-    if (document.getElementById('studyStatus')) document.getElementById('studyStatus').value = record.status || '';
-    if (document.getElementById('scale')) document.getElementById('scale').value = record.scale || '';
-    if (document.getElementById('reason')) document.getElementById('reason').value = record.reason || '';
-    if (document.getElementById('notes')) document.getElementById('notes').value = record.notes || '';
+    // 2. Safely populate form fields
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val !== undefined && val !== null ? val : '';
+    };
 
-    // Open modal window
-    if (typeof openModal === 'function') {
+    setVal('recordId', record.id);
+    setVal('productName', record.productName);
+    setVal('studyCategory', record.studyCategory);
+    setVal('productType', record.productType);
+    setVal('studyDate', record.date);
+    setVal('stage', record.stage);
+    setVal('studyStatus', record.status);
+    setVal('version', record.version);
+    setVal('scale', record.scale);
+    setVal('reason', record.reason);
+    setVal('notes', record.notes);
+
+    // 3. Reveal the modal UI element
+    const modalEl = document.getElementById('recordModal') || document.getElementById('modal');
+    if (modalEl) {
+        modalEl.classList.remove('hidden');
+    } else if (ui && (ui.recordModal || ui.modal)) {
+        (ui.recordModal || ui.modal).classList.remove('hidden');
+    } else if (typeof openModal === 'function') {
         openModal();
-    } else if (ui.recordModal) {
-        ui.recordModal.classList.remove('hidden');
-    } else if (ui.modal) {
-        ui.modal.classList.remove('hidden');
     }
 };
         ui.recordForm.addEventListener('submit', async (e) => {
