@@ -1024,7 +1024,7 @@ window.openEditModal = (recordId) => {
             alert(`Return Feedback from ${record.returnedBy || 'Reviewer'}:\n\n"${record.returnComment}"`);
         }
 
-        // 2. Safe field assignment
+        // 2. Safely populate form fields
         const setVal = (id, val) => {
             const el = document.getElementById(id);
             if (el) el.value = val !== undefined && val !== null ? val : '';
@@ -1042,20 +1042,21 @@ window.openEditModal = (recordId) => {
         setVal('reason', record.reason);
         setVal('notes', record.notes);
 
-        // 3. Force modal container visibility
-        const modal = document.getElementById('recordModal') || document.getElementById('modal') || (typeof ui !== 'undefined' && (ui.recordModal || ui.modal));
-        
-        if (modal) {
-            modal.classList.remove('hidden');
-            modal.style.display = 'flex'; 
+        // 3. Locate and unhide the exact modal wrapper around the form
+        const formEl = document.getElementById('recordForm') || (ui && ui.recordForm);
+        const modalContainer = formEl ? (formEl.closest('.fixed') || formEl.closest('div') || formEl.parentElement) : null;
+
+        if (modalContainer) {
+            modalContainer.classList.remove('hidden');
+            modalContainer.style.display = 'flex';
         } else if (typeof openModal === 'function') {
             openModal();
         } else {
-            alert('Could not find modal container element in DOM.');
+            alert('Modal wrapper element could not be located.');
         }
     } catch (err) {
         console.error('Error in openEditModal:', err);
-        alert('Failed to open edit modal: ' + err.message);
+        alert('Error: ' + err.message);
     }
 };
         ui.recordForm.addEventListener('submit', async (e) => {
