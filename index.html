@@ -463,12 +463,11 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
         };
 
         const STATUS = {
-            DRAFT: 'Draft',
-            PENDING_REVIEW: 'Pending Review',
-            REVIEWED: 'Reviewed',
-            APPROVED: 'Approved',
-            REJECTED: 'Rejected'
-        };
+    PENDING_REVIEW: 'Pending Review',
+    REVIEWED: 'Reviewed',
+    APPROVED: 'Approved',
+    RETURNED: 'Returned for Revision'
+};
         const canApprove = (user) => {
        if (!user) return false;
        return user.role === ROLES.ADMIN || 
@@ -745,28 +744,53 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
                 tr.className = 'hover:bg-gray-50 transition-colors';
                 
                 let actionButtons = '';
-        const userRole = currentUser?.role || '';
 
-        // Section Head or Admin can Review records in Pending Review status
-        if ((userRole === 'Section Head' || userRole === 'Admin') && record.status === STATUS.PENDING_REVIEW) {
-            actionButtons += `
-                <button onclick="processAction('${record.id}', '${STATUS.REVIEWED}')" class="text-blue-600 hover:text-blue-800 font-semibold text-xs mr-2" title="Review Record">
-                    <i class="fas fa-check-circle mr-1"></i>Review
-                </button>
-            `;
-        }
+    // PDF attachment button (Visible for all roles)
+    if (record.pdfUrl) {
+        actionButtons += `
+            <a href="${record.pdfUrl}" target="_blank" download="${record.productName}_Protocol.pdf" class="inline-flex items-center px-2 py-0.5 bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 rounded text-xs font-semibold mr-2" title="View PDF">
+                <i class="fas fa-file-pdf text-red-600 mr-1"></i> PDF
+            </a>
+        `;
+    }
 
-        // QA Manager, Deputy QA Manager, or Admin can Approve or Reject records in Reviewed status
-        if ((userRole === 'QA Manager' || userRole === 'Deputy QA Manager' || userRole === 'Admin') && record.status === STATUS.REVIEWED) {
-            actionButtons += `
-                <button onclick="processAction('${record.id}', '${STATUS.APPROVED}')" class="text-green-600 hover:text-green-800 font-semibold text-xs mr-2" title="Approve Record">
-                    <i class="fas fa-check-double mr-1"></i>Approve
-                </button>
-                <button onclick="processAction('${record.id}', '${STATUS.REJECTED}', true)" class="text-red-600 hover:text-red-800 font-semibold text-xs" title="Reject Record">
-                    <i class="fas fa-times-circle mr-1"></i>Reject
-                </button>
-            `;
-        }
+    const userRole = currentUser?.role || '';
+
+    // 1. REVIEW ACTION (Section Head & Deputy QA Manager)
+    if ((userRole === 'Section Head' || userRole === 'Deputy QA Manager' || userRole === 'QA Deputy Manager' || userRole === 'Admin') && record.status === STATUS.PENDING_REVIEW) {
+        actionButtons += `
+            <button onclick="processAction('${record.id}', '${STATUS.REVIEWED}')" class="text-blue-600 hover:text-blue-800 font-semibold text-xs mr-2" title="Review Record">
+                <i class="fas fa-check-circle mr-1"></i>Review
+            </button>
+        `;
+    }
+
+    // 2. APPROVE ACTION (QA Manager & Deputy QA Manager)
+    if ((userRole === 'QA Manager' || userRole === 'Deputy QA Manager' || userRole === 'QA Deputy Manager' || userRole === 'Admin') && record.status === STATUS.REVIEWED) {
+        actionButtons += `
+            <button onclick="processAction('${record.id}', '${STATUS.APPROVED}')" class="text-green-600 hover:text-green-800 font-semibold text-xs mr-2" title="Approve Record">
+                <i class="fas fa-thumbs-up mr-1"></i>Approve
+            </button>
+        `;
+    }
+
+    // 3. RETURN TO CREATOR ACTION (Section Head, Deputy QA Manager, QA Manager)
+    if (['Section Head', 'Deputy QA Manager', 'QA Deputy Manager', 'QA Manager', 'Admin'].includes(userRole) && record.status !== STATUS.APPROVED && record.status !== STATUS.RETURNED) {
+        actionButtons += `
+            <button onclick="returnRecordToCreator('${record.id}')" class="text-amber-600 hover:text-amber-800 font-semibold text-xs mr-2" title="Return to Creator with Comment">
+                <i class="fas fa-undo mr-1"></i>Return
+            </button>
+        `;
+    }
+
+    // 4. FIX & RESUBMIT ACTION (When status is Returned)
+    if (record.status === STATUS.RETURNED && (record.createdBy === currentUser.username || userRole === 'Admin')) {
+        actionButtons += `
+            <button onclick="openEditModal('${record.id}')" class="text-purple-600 hover:text-purple-800 font-semibold text-xs mr-2" title="Edit and Resubmit">
+                <i class="fas fa-edit mr-1"></i>Fix & Resubmit
+            </button>
+        `;
+    }
 
                tr.innerHTML = `
     <td class="px-4 py-3 text-sm text-gray-900 font-medium">
@@ -948,7 +972,28 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
         document.querySelectorAll('.close-user-modal').forEach(btn => btn.addEventListener('click', () => ui.userModal.classList.remove('active')));
 
         // --- Form Submissions & Actions ---
+// Return record to creator with mandatory comments
+const returnRecordToCreator = async (recordId) => {
+    const comment = prompt("Enter reason for returning record to creator:");
+    
+    if (comment === null) return; 
+    if (!comment.trim()) {
+        showMessage('Error', 'A return reason comment is mandatory.', 'error');
+        return;
+    }
 
+    const rec = records.find(r => r.id === recordId);
+    if (rec) {
+        rec.status = STATUS.RETURNED;
+        rec.returnComment = comment.trim();
+        rec.returnedBy = currentUser.username;
+        rec.returnedAt = new Date().toISOString();
+
+        if (typeof saveRecords === 'function') await saveRecords();
+        renderTable();
+        showMessage('Success', 'Record returned to creator with comment.', 'success');
+    }
+};
         ui.recordForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
