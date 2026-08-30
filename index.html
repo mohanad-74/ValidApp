@@ -24,14 +24,7 @@
         }
     }
 </script>
-       const convertFileToBase64 = (file) => {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = (error) => reject(error);
-            });
-        };
+     
     </script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
