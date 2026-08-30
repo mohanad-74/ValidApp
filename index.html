@@ -1012,43 +1012,50 @@ window.returnRecordToCreator = async (recordId) => {
 };
 // Global handler to open edit modal for returned records
 window.openEditModal = (recordId) => {
-    const record = records.find(r => String(r.id) === String(recordId));
-    if (!record) {
-        console.error('Record not found:', recordId);
-        return;
-    }
+    try {
+        const record = records.find(r => String(r.id) === String(recordId));
+        if (!record) {
+            alert('Record not found!');
+            return;
+        }
 
-    // 1. Show return feedback comment
-    if (record.returnComment) {
-        alert(`Return Feedback from ${record.returnedBy || 'Reviewer'}:\n\n"${record.returnComment}"`);
-    }
+        // 1. Show reviewer return comment
+        if (record.returnComment) {
+            alert(`Return Feedback from ${record.returnedBy || 'Reviewer'}:\n\n"${record.returnComment}"`);
+        }
 
-    // 2. Safely populate form fields
-    const setVal = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.value = val !== undefined && val !== null ? val : '';
-    };
+        // 2. Safe field assignment
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val !== undefined && val !== null ? val : '';
+        };
 
-    setVal('recordId', record.id);
-    setVal('productName', record.productName);
-    setVal('studyCategory', record.studyCategory);
-    setVal('productType', record.productType);
-    setVal('studyDate', record.date);
-    setVal('stage', record.stage);
-    setVal('studyStatus', record.status);
-    setVal('version', record.version);
-    setVal('scale', record.scale);
-    setVal('reason', record.reason);
-    setVal('notes', record.notes);
+        setVal('recordId', record.id);
+        setVal('productName', record.productName);
+        setVal('studyCategory', record.studyCategory);
+        setVal('productType', record.productType);
+        setVal('studyDate', record.date || record.studyDate);
+        setVal('stage', record.stage);
+        setVal('studyStatus', record.status);
+        setVal('version', record.version);
+        setVal('scale', record.scale);
+        setVal('reason', record.reason);
+        setVal('notes', record.notes);
 
-    // 3. Reveal the modal UI element
-    const modalEl = document.getElementById('recordModal') || document.getElementById('modal');
-    if (modalEl) {
-        modalEl.classList.remove('hidden');
-    } else if (ui && (ui.recordModal || ui.modal)) {
-        (ui.recordModal || ui.modal).classList.remove('hidden');
-    } else if (typeof openModal === 'function') {
-        openModal();
+        // 3. Force modal container visibility
+        const modal = document.getElementById('recordModal') || document.getElementById('modal') || (typeof ui !== 'undefined' && (ui.recordModal || ui.modal));
+        
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex'; 
+        } else if (typeof openModal === 'function') {
+            openModal();
+        } else {
+            alert('Could not find modal container element in DOM.');
+        }
+    } catch (err) {
+        console.error('Error in openEditModal:', err);
+        alert('Failed to open edit modal: ' + err.message);
     }
 };
         ui.recordForm.addEventListener('submit', async (e) => {
