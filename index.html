@@ -461,7 +461,14 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
          DEPUTY: 'Deputy QA Manager',
          VIEWER: 'Viewer'
         };
+let isDelegationActive = localStorage.getItem('isDelegationActive') === 'true';
 
+const canApprove = (user) => {
+    if (!user) return false;
+    if (user.role === ROLES.ADMIN || user.role === ROLES.APPROVER) return true;
+    if (user.role === ROLES.DEPUTY) return isDelegationActive;
+    return false;
+};
         const STATUS = {
             DRAFT: 'Draft',
             PENDING_REVIEW: 'Pending Review',
@@ -1079,6 +1086,36 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
                 showMessage('Success', 'User deleted.', 'success');
             });
         };
-    </script>
+    function toggleDelegation() {
+        if (currentUser.role !== ROLES.ADMIN && currentUser.role !== ROLES.APPROVER) {
+            alert("Only an Administrator or QA Manager can change delegation status.");
+            return;
+        }
+
+        isDelegationActive = !isDelegationActive;
+        localStorage.setItem('isDelegationActive', isDelegationActive);
+        
+        updateDelegationUI();
+
+        if (typeof renderTable === 'function') {
+            renderTable();
+        }
+    }
+
+    function updateDelegationUI() {
+        const btn = document.getElementById('delegationBtn');
+        if (!btn) return;
+
+        if (isDelegationActive) {
+            btn.textContent = 'ON';
+            btn.className = 'px-3 py-1 text-xs font-bold rounded text-white bg-green-600 hover:bg-green-700';
+        } else {
+            btn.textContent = 'OFF';
+            btn.className = 'px-3 py-1 text-xs font-bold rounded text-white bg-red-600 hover:bg-red-700';
+        }
+    }
+</script>
+</body>
+</html>
 </body>
 </html>
