@@ -999,7 +999,7 @@ createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.userna
             if(!db) renderTable(); 
         });
 
-        window.processAction = (id, newStatus, isReject = false) => {
+      window.processAction = (id, newStatus, isReject = false) => {
     const record = records.find(r => r.id === id);
     if (!record) return;
 
@@ -1035,7 +1035,7 @@ createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.userna
             Object.assign(record, updates);
             if (typeof renderTable === 'function') renderTable();
 
-            // Persist to Firebase if configured
+            // Persist to Firebase if connected
             if (typeof db !== 'undefined' && db && typeof updateDoc === 'function' && typeof getDocRef === 'function') {
                 await updateDoc(getDocRef('records', id), updates);
             }
@@ -1055,12 +1055,6 @@ createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.userna
         if (confirm(confirmMsg)) handleUpdate();
     }
 };
-
-        logAction(`${actionName} Record`, record.productName, `Status: ${newStatus}`, updatedRecord);
-        showMessage('Success', `Record updated to ${newStatus}.`, 'success');
-    });
-};
-
         window.editRecord = (id) => {
             const record = records.find(r => r.id === id);
             if (!record) return;
