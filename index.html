@@ -298,7 +298,15 @@
     <div id="userModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-60 z-50 items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
             <div class="bg-dark text-white p-4 flex justify-between items-center rounded-t-xl flex-shrink-0">
-                <h3 class="text-xl font-bold"><i class="fas fa-users-cog mr-2"></i>User Management</h3>
+               <h3 class="text-xl font-bold"><i class="fas fa-users-cog mr-2"></i>User Management</h3>
+
+<!-- DELEGATION CONTROL SWITCH -->
+<div id="delegationControl" class="flex items-center justify-between bg-gray-100 p-3 rounded border my-3">
+    <span class="text-sm font-semibold text-gray-700">Deputy QA Delegation:</span>
+    <button id="delegationBtn" onclick="toggleDelegation()" class="px-3 py-1 text-xs font-bold rounded text-white bg-red-600">
+        OFF
+    </button>
+</div>
                 <button class="close-user-modal text-white hover:text-gray-300 transition">
                     <i class="fas fa-times text-xl"></i>
                 </button>
@@ -319,6 +327,7 @@
                             <option value="Administrator">Administrator (Add/Edit)</option>
                             <option value="Section Head">Section Head (Review)</option>
                             <option value="QA Manager">QA Manager (Approve)</option>
+                            <option value="Deputy QA Manager">Deputy QA Manager</option>
                         </select>
                     </div>
                     <div>
@@ -445,9 +454,12 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
 
         // --- CONSTANTS ---
         const ROLES = {
-            ADMIN: 'Administrator',
-            REVIEWER: 'Section Head',
-            APPROVER: 'QA Manager'
+           ADMIN: 'Administrator',
+         CREATOR: 'Creator',
+         REVIEWER: 'Reviewer',
+         APPROVER: 'QA Manager',
+         DEPUTY: 'Deputy QA Manager',
+         VIEWER: 'Viewer'
         };
 
         const STATUS = {
@@ -457,7 +469,12 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
             APPROVED: 'Approved',
             REJECTED: 'Rejected'
         };
-
+        const canApprove = (user) => {
+       if (!user) return false;
+       return user.role === ROLES.ADMIN || 
+           user.role === ROLES.APPROVER || 
+           user.role === ROLES.DEPUTY;
+        };
         const CATEGORIES = {
             PROCESS: 'Process Validation',
             HOLD_TIME: 'Hold Time Study',
@@ -743,10 +760,10 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
                     `;
                 }
 
-                if (currentUser.role === ROLES.APPROVER && record.status === STATUS.REVIEWED) {
-                    actionButtons += `
-                        <button onclick="processAction('${record.id}', '${STATUS.APPROVED}')" class="text-green-600 hover:text-green-900 mx-1 p-1 bg-green-50 rounded border border-green-200" title="Approve"><i class="fas fa-check-double"></i></button>
-                        <button onclick="processAction('${record.id}', '${STATUS.REJECTED}', true)" class="text-red-600 hover:text-red-900 mx-1 p-1 bg-red-50 rounded border border-red-200" title="Reject"><i class="fas fa-times"></i></button>
+               if (canApprove(currentUser) && record.status === STATUS.REVIEWED) {
+                   actionButtons += `
+              <button onclick="processAction('${record.id}', '${STATUS.APPROVED}')" class="text-green-600 hover:text-green-900 mx-1 p-1 bg-green-50 rounded border border-green-200" title="Approve"><i class="fas fa-check-double"></i></button>
+              <button onclick="processAction('${record.id}', '${STATUS.REJECTED}', true)" class="text-red-600 hover:text-red-900 mx-1 p-1 bg-red-50 rounded border border-red-200" title="Reject"><i class="fas fa-times"></i></button>
                     `;
                 }
                 
