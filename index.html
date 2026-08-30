@@ -777,7 +777,7 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
     // 3. RETURN TO CREATOR ACTION (Section Head, Deputy QA Manager, QA Manager)
     if (['Section Head', 'Deputy QA Manager', 'QA Deputy Manager', 'QA Manager', 'Admin'].includes(userRole) && record.status !== STATUS.APPROVED && record.status !== STATUS.RETURNED) {
         actionButtons += `
-            <button onclick="returnRecordToCreator('${record.id}')" class="text-amber-600 hover:text-amber-800 font-semibold text-xs mr-2" title="Return to Creator with Comment">
+            <button onclick="window.returnRecordToCreator('${record.id}')" class="text-amber-600 hover:text-amber-800 font-semibold text-xs mr-2" title="Return to Creator">
                 <i class="fas fa-undo mr-1"></i>Return
             </button>
         `;
@@ -973,25 +973,41 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
 
         // --- Form Submissions & Actions ---
 // Return record to creator with mandatory comments
-const returnRecordToCreator = async (recordId) => {
+// Global handler for returning records
+window.returnRecordToCreator = async (recordId) => {
     const comment = prompt("Enter reason for returning record to creator:");
     
-    if (comment === null) return; 
+    if (comment === null) return; // User canceled prompt
     if (!comment.trim()) {
-        showMessage('Error', 'A return reason comment is mandatory.', 'error');
+        alert('A return reason comment is mandatory.');
         return;
     }
 
-    const rec = records.find(r => r.id === recordId);
+    // Convert both IDs to strings to prevent string/number lookup failures
+    const rec = records.find(r => String(r.id) === String(recordId));
+
     if (rec) {
-        rec.status = STATUS.RETURNED;
+        rec.status = (typeof STATUS !== 'undefined' && STATUS.RETURNED) ? STATUS.RETURNED : 'Returned for Revision';
         rec.returnComment = comment.trim();
-        rec.returnedBy = currentUser.username;
+        rec.returnedBy = currentUser?.username || 'Unknown';
         rec.returnedAt = new Date().toISOString();
 
-        if (typeof saveRecords === 'function') await saveRecords();
+        // Save records using available storage helper
+        if (typeof saveRecords === 'function') {
+            await saveRecords();
+        } else if (typeof saveToLocalStorage === 'function') {
+            saveToLocalStorage();
+        }
+
         renderTable();
-        showMessage('Success', 'Record returned to creator with comment.', 'success');
+
+        if (typeof showMessage === 'function') {
+            showMessage('Success', 'Record returned to creator with comment.', 'success');
+        } else {
+            alert('Record returned to creator with comment.');
+        }
+    } else {
+        console.error('Record not found for ID:', recordId);
     }
 };
         ui.recordForm.addEventListener('submit', async (e) => {
