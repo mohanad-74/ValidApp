@@ -1017,7 +1017,6 @@ createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.userna
 
     const handleUpdate = async (reason = '') => {
         try {
-            // Build updates payload
             const updates = { 
                 status: targetStatus,
                 updatedAt: new Date().toISOString() 
@@ -1032,11 +1031,11 @@ createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.userna
                 updates.approvedBy = activeUser;
             }
 
-            // 1. Immediately update local UI memory
+            // Update UI state immediately
             Object.assign(record, updates);
             if (typeof renderTable === 'function') renderTable();
 
-            // 2. Persist to Firebase if connected
+            // Persist to Firebase if configured
             if (typeof db !== 'undefined' && db && typeof updateDoc === 'function' && typeof getDocRef === 'function') {
                 await updateDoc(getDocRef('records', id), updates);
             }
@@ -1050,7 +1049,6 @@ createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.userna
         }
     };
 
-    // Use custom modal if available, fallback to browser native dialog
     if (typeof showConfirm === 'function') {
         showConfirm(`Confirm ${actionName}`, confirmMsg, isReject, (reason) => handleUpdate(reason));
     } else {
