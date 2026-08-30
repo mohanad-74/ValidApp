@@ -1005,49 +1005,46 @@ createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.userna
         });
 
         window.processAction = (id, newStatus, isReject = false) => {
-            const record = records.find(r => r.id === id);
-            if (!record) return;
+    const record = records.find(r => r.id === id);
+    if (!record) return;
 
-          // Add activeUser right above actionName
-const activeUser = currentUser?.username || currentUser?.name || 'Unknown User';
+    const activeUser = currentUser?.username || currentUser?.name || 'Unknown User';
 
-let actionName = 'Approved';
-let updatePayload = { status: newStatus };
+    let actionName = 'Approved';
+    let updatePayload = { status: newStatus };
 
-if (isReject) {
-    actionName = 'Rejected';
-    updatePayload.rejectedBy = activeUser;
-} else if (newStatus === STATUS.PENDING_REVIEW) {
-    actionName = 'Submitted for Review';
-} else if (newStatus === STATUS.REVIEWED) {
-    actionName = 'Reviewed';
-    updatePayload.reviewedBy = activeUser;
-} else if (newStatus === STATUS.APPROVED) {
-    actionName = 'Approved';
-    updatePayload.approvedBy = activeUser;
-}
+    if (isReject) {
+        actionName = 'Rejected';
+        updatePayload.rejectedBy = activeUser;
+    } else if (newStatus === STATUS.PENDING_REVIEW) {
+        actionName = 'Submitted for Review';
+    } else if (newStatus === STATUS.REVIEWED) {
+        actionName = 'Reviewed';
+        updatePayload.reviewedBy = activeUser;
+    } else if (newStatus === STATUS.APPROVED) {
+        actionName = 'Approved';
+        updatePayload.approvedBy = activeUser;
+    }
 
-            const confirmMsg = isReject ? 
-                `Are you sure you want to REJECT ${record.productName}?` : 
-                `Are you sure you want to mark ${record.productName} as ${newStatus}?`;
+    const confirmMsg = isReject ? 
+        `Are you sure you want to REJECT ${record.productName}?` : 
+        `Are you sure you want to mark ${record.productName} as ${newStatus}?`;
 
-            showConfirm(`Confirm ${actionName}`, confirmMsg, isReject, async (reason) => {
-                const updatedRecord = { ...record, status: newStatus };
-                if (db) await setDoc(getDocRef('records', id), updatedRecord);
-                
-                let details = `Status changed to ${newStatus}.`;
-                if (isReject && reason) details += ` Reason: ${reason}`;
-                
-                logAction(actionName, record.productName, details, updatedRecord);
-                
-                if (!db) {
-                    const idx = records.findIndex(r => r.id === id);
-                    records[idx] = updatedRecord;
-                    renderTable();
-                }
-                showMessage('Success', `Record successfully ${actionName.toLowerCase()}.`, 'success');
-            });
-        };
+    showConfirm(`Confirm ${actionName}`, confirmMsg, isReject, async (reason) => {
+        const updatedRecord = { ...record, ...updatePayload };
+        if (reason) updatedRecord.rejectionReason = reason;
+
+        if (db) {
+            await updateDoc(getDocRef('records', id), updatedRecord);
+        } else {
+            Object.assign(record, updatedRecord);
+            renderTable();
+        }
+
+        logAction(`${actionName} Record`, record.productName, `Status: ${newStatus}`, updatedRecord);
+        showMessage('Success', `Record updated to ${newStatus}.`, 'success');
+    });
+};
 
         window.editRecord = (id) => {
             const record = records.find(r => r.id === id);
