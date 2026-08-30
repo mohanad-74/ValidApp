@@ -1004,48 +1004,58 @@ createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.userna
     if (!record) return;
 
     const activeUser = currentUser?.username || currentUser?.name || 'Unknown User';
+    const targetStatus = newStatus || (isReject ? 'Rejected' : 'Reviewed');
 
-    let actionName = 'Approved';
-    let updatePayload = { status: newStatus };
+    let actionName = 'Action';
+    if (isReject) actionName = 'Rejected';
+    else if (targetStatus === 'Reviewed' || targetStatus === STATUS?.REVIEWED) actionName = 'Reviewed';
+    else if (targetStatus === 'Approved' || targetStatus === STATUS?.APPROVED) actionName = 'Approved';
 
-    if (isReject) {
-        actionName = 'Rejected';
-        updatePayload.rejectedBy = activeUser;
-    } else if (newStatus === STATUS.PENDING_REVIEW) {
-        actionName = 'Submitted for Review';
-    } else if (newStatus === STATUS.REVIEWED) {
-        actionName = 'Reviewed';
-        updatePayload.reviewedBy = activeUser;
-    } else if (newStatus === STATUS.APPROVED) {
-        actionName = 'Approved';
-        updatePayload.approvedBy = activeUser;
-    }
+    const confirmMsg = isReject 
+        ? `Are you sure you want to REJECT ${record.productName}?`
+        : `Are you sure you want to mark ${record.productName} as ${targetStatus}?`;
 
-    const confirmMsg = isReject ? 
-        `Are you sure you want to REJECT ${record.productName}?` : 
-        `Are you sure you want to mark ${record.productName} as ${newStatus}?`;
-
-    showConfirm(`Confirm ${actionName}`, confirmMsg, isReject, async (reason) => {
+    const handleUpdate = async (reason = '') => {
         try {
-            const updatedRecord = { ...record, ...updatePayload };
-            if (reason) updatedRecord.rejectionReason = reason;
+            // Build updates payload
+            const updates = { 
+                status: targetStatus,
+                updatedAt: new Date().toISOString() 
+            };
 
-            // 1. Save to Firebase database if connected
-            if (typeof db !== 'undefined' && db) {
-                await updateDoc(getDocRef('records', id), updatePayload);
+            if (isReject) {
+                updates.rejectedBy = activeUser;
+                if (reason) updates.rejectionReason = reason;
+            } else if (targetStatus === 'Reviewed' || targetStatus === STATUS?.REVIEWED) {
+                updates.reviewedBy = activeUser;
+            } else if (targetStatus === 'Approved' || targetStatus === STATUS?.APPROVED) {
+                updates.approvedBy = activeUser;
             }
 
-            // 2. Always update local record array & refresh UI
-            Object.assign(record, updatedRecord);
-            renderTable();
+            // 1. Immediately update local UI memory
+            Object.assign(record, updates);
+            if (typeof renderTable === 'function') renderTable();
 
-            logAction(`${actionName} Record`, record.productName, `Status: ${newStatus}`, updatedRecord);
-            showMessage('Success', `Record status updated to ${newStatus}.`, 'success');
-        } catch (error) {
-            console.error('Error updating status:', error);
-            showMessage('Error', 'Failed to update record status.', 'error');
+            // 2. Persist to Firebase if connected
+            if (typeof db !== 'undefined' && db && typeof updateDoc === 'function' && typeof getDocRef === 'function') {
+                await updateDoc(getDocRef('records', id), updates);
+            }
+
+            if (typeof logAction === 'function') logAction(`${actionName} Record`, record.productName, `Status: ${targetStatus}`, record);
+            if (typeof showMessage === 'function') showMessage('Success', `Record updated to ${targetStatus}.`, 'success');
+
+        } catch (err) {
+            console.error('Error during action execution:', err);
+            alert('Action failed: ' + (err.message || err));
         }
-    });
+    };
+
+    // Use custom modal if available, fallback to browser native dialog
+    if (typeof showConfirm === 'function') {
+        showConfirm(`Confirm ${actionName}`, confirmMsg, isReject, (reason) => handleUpdate(reason));
+    } else {
+        if (confirm(confirmMsg)) handleUpdate();
+    }
 };
 
         logAction(`${actionName} Record`, record.productName, `Status: ${newStatus}`, updatedRecord);
