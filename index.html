@@ -10,21 +10,19 @@
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     
     <script>
-    tailwind.config = {
-        theme: {
-            extend: {
-                colors: {
-                    primary: '#1e40af',
-                    secondary: '#3b82f6',
-                    accent: '#10b981',
-                    dark: '#1f2937',
-                    light: '#f3f4f6'
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#3b82f6',
+                        accent: '#10b981',
+                        dark: '#1f2937',
+                        light: '#f3f4f6'
+                    }
                 }
             }
         }
-    }
-</script>
-     
     </script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
@@ -284,20 +282,14 @@
                     </div>
 
                     <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Additional Notes (Any)</label>
-        <textarea id="notes" rows="2" class="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" placeholder="Optional notes..."></textarea>
-    </div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Additional Notes (Any)</label>
+                        <textarea id="notes" rows="2" class="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" placeholder="Optional comments..."></textarea>
+                    </div>
 
-    <!-- NEW PDF UPLOAD FIELD -->
-    <div class="mt-3">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Validation Protocol / Attachment (PDF)</label>
-        <input type="file" id="pdfFile" accept="application/pdf" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md p-1" />
-    </div>
-
-    <div class="pt-4 flex justify-end gap-3 border-t mt-6">
-        <button type="button" class="close-modal px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition">Cancel</button>
-        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-800 transition font-medium">Save Record</button>
-    </div>
+                    <div class="pt-4 flex justify-end gap-3 border-t mt-6">
+                        <button type="button" class="close-modal px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-800 transition font-medium">Save Record</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -751,27 +743,18 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
             filteredRecords.forEach(record => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-gray-50 transition-colors';
-               let actionButtons = '';
+                
+                let actionButtons = '';
+        const userRole = currentUser?.role || '';
 
-    // Add PDF download link to actions column if PDF exists
-    if (record.pdfUrl) {
-        actionButtons += `
-            <a href="${record.pdfUrl}" target="_blank" download="${record.productName}_Protocol.pdf" class="inline-flex items-center px-2 py-0.5 bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 rounded text-xs font-semibold mr-2" title="View PDF Document">
-                <i class="fas fa-file-pdf text-red-600 mr-1"></i> PDF
-            </a>
-        `;
-    }
-
-   const userRole = currentUser?.role || '';
-
-    // Section Head or Admin can Review records in Pending Review status
-    if ((userRole === 'Section Head' || userRole === 'Admin') && record.status === STATUS.PENDING_REVIEW) {
-        actionButtons += `
-            <button onclick="processAction('${record.id}', '${STATUS.REVIEWED}')" class="text-blue-600 hover:text-blue-800 font-semibold text-xs mr-2" title="Review Record">
-                <i class="fas fa-check-circle mr-1"></i>Review
-            </button>
-        `;
-    }
+        // Section Head or Admin can Review records in Pending Review status
+        if ((userRole === 'Section Head' || userRole === 'Admin') && record.status === STATUS.PENDING_REVIEW) {
+            actionButtons += `
+                <button onclick="processAction('${record.id}', '${STATUS.REVIEWED}')" class="text-blue-600 hover:text-blue-800 font-semibold text-xs mr-2" title="Review Record">
+                    <i class="fas fa-check-circle mr-1"></i>Review
+                </button>
+            `;
+        }
 
         // QA Manager, Deputy QA Manager, or Admin can Approve or Reject records in Reviewed status
         if ((userRole === 'QA Manager' || userRole === 'Deputy QA Manager' || userRole === 'Admin') && record.status === STATUS.REVIEWED) {
@@ -965,55 +948,24 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
         document.querySelectorAll('.close-user-modal').forEach(btn => btn.addEventListener('click', () => ui.userModal.classList.remove('active')));
 
         // --- Form Submissions & Actions ---
-const convertFileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = (error) => reject(error);
-    });
+
+        ui.recordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const id = document.getElementById('recordId').value;
+            const data = {
+                productName: document.getElementById('productName').value,
+                studyCategory: document.getElementById('studyCategory').value,
+                productType: document.getElementById('productType').value,
+                date: document.getElementById('studyDate').value,
+                stage: document.getElementById('stage').value,
+                status: document.getElementById('studyStatus').value,
+                version: document.getElementById('version').value,
+                scale: document.getElementById('scale').value,
+                reason: document.getElementById('reason').value,
+              notes: document.getElementById('notes').value,
+createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.username) : currentUser.username
 };
-
-ui.recordForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-      ui.recordForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const id = document.getElementById('recordId').value;
-    const existingRecord = records.find(r => r.id === id);
-
-    // 1. Process PDF file input
-    const pdfInput = document.getElementById('pdfFile');
-    let pdfUrl = existingRecord?.pdfUrl || null;
-
-    if (pdfInput && pdfInput.files[0]) {
-        const file = pdfInput.files[0];
-        
-        // Limit file size to 4MB for optimal performance
-        if (file.size > 4 * 1024 * 1024) {
-            showMessage('Error', 'PDF file size must be under 4MB.', 'error');
-            return;
-        }
-        
-        pdfUrl = await convertFileToBase64(file);
-    }
-
-    // 2. Build record payload including pdfUrl
-    const data = {
-        productName: document.getElementById('productName').value,
-        studyCategory: document.getElementById('studyCategory').value,
-        productType: document.getElementById('productType').value,
-        date: document.getElementById('studyDate').value,
-        stage: document.getElementById('stage').value,
-        status: document.getElementById('studyStatus').value,
-        version: document.getElementById('version').value,
-        scale: document.getElementById('scale').value,
-        reason: document.getElementById('reason').value,
-        notes: document.getElementById('notes').value,
-        pdfUrl: pdfUrl,
-        createdBy: id ? (existingRecord?.createdBy || currentUser.username) : currentUser.username
-    };
           
 
             if (id) {
