@@ -793,11 +793,19 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
                         <div class="font-medium text-gray-700 truncate">${record.reason}</div>
                         <div class="text-gray-400 truncate mt-1">${record.notes || 'No extra notes'}</div>
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full border ${getStatusColor(record.status)}">
-                            ${record.status}
-                        </span>
-                    </td>
+                    <<td class="px-4 py-3 whitespace-nowrap">
+            <div class="flex flex-col gap-1">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full border ${getStatusColor(record.status)}">
+                    ${record.status}
+                </span>
+                <div class="text-[10px] text-gray-500 leading-tight mt-0.5">
+                    ${record.createdBy ? `<div><b>Created:</b> ${record.createdBy}</div>` : ''}
+                    ${record.reviewedBy ? `<div class="text-blue-600"><b>Reviewed:</b> ${record.reviewedBy}</div>` : ''}
+                    ${record.approvedBy ? `<div class="text-green-600"><b>Approved:</b> ${record.approvedBy}</div>` : ''}
+                    ${record.rejectedBy ? `<div class="text-red-600"><b>Rejected:</b> ${record.rejectedBy}</div>` : ''}
+                </div>
+            </div>
+        </td>
                     <td class="px-4 py-3 whitespace-nowrap text-center text-sm font-medium">
                         <div class="flex justify-center items-center gap-1">${actionButtons}</div>
                     </td>
@@ -960,7 +968,9 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
                 version: document.getElementById('version').value,
                 scale: document.getElementById('scale').value,
                 reason: document.getElementById('reason').value,
-                notes: document.getElementById('notes').value
+              notes: document.getElementById('notes').value,
+createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.username) : currentUser.username
+};
             };
 
             if (id) {
@@ -998,10 +1008,24 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
             const record = records.find(r => r.id === id);
             if (!record) return;
 
-            let actionName = 'Approved';
-            if (isReject) actionName = 'Rejected';
-            else if (newStatus === STATUS.PENDING_REVIEW) actionName = 'Submitted for Review';
-            else if (newStatus === STATUS.REVIEWED) actionName = 'Reviewed';
+          // Add activeUser right above actionName
+const activeUser = currentUser?.username || currentUser?.name || 'Unknown User';
+
+let actionName = 'Approved';
+let updatePayload = { status: newStatus };
+
+if (isReject) {
+    actionName = 'Rejected';
+    updatePayload.rejectedBy = activeUser;
+} else if (newStatus === STATUS.PENDING_REVIEW) {
+    actionName = 'Submitted for Review';
+} else if (newStatus === STATUS.REVIEWED) {
+    actionName = 'Reviewed';
+    updatePayload.reviewedBy = activeUser;
+} else if (newStatus === STATUS.APPROVED) {
+    actionName = 'Approved';
+    updatePayload.approvedBy = activeUser;
+}
 
             const confirmMsg = isReject ? 
                 `Are you sure you want to REJECT ${record.productName}?` : 
