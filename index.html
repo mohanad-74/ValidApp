@@ -1019,12 +1019,31 @@ window.openEditModal = (recordId) => {
             return;
         }
 
-        // 1. Show reviewer return comment
+        // 1. Show feedback prompt
         if (record.returnComment) {
             alert(`Return Feedback from ${record.returnedBy || 'Reviewer'}:\n\n"${record.returnComment}"`);
         }
 
-        // 2. Safely populate form fields
+        // 2. Trigger native modal trigger via "+ Add Record" button
+        const addBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Add Record'));
+        if (addBtn) {
+            addBtn.click();
+        }
+
+        // Unhide all parent containers of the record form
+        const formEl = document.getElementById('recordForm') || (typeof ui !== 'undefined' && ui?.recordForm);
+        if (formEl) {
+            let current = formEl;
+            while (current && current !== document.body) {
+                current.classList.remove('hidden');
+                if (window.getComputedStyle(current).display === 'none') {
+                    current.style.display = 'flex';
+                }
+                current = current.parentElement;
+            }
+        }
+
+        // 3. Populate form fields with returned record data
         const setVal = (id, val) => {
             const el = document.getElementById(id);
             if (el) el.value = val !== undefined && val !== null ? val : '';
@@ -1042,21 +1061,9 @@ window.openEditModal = (recordId) => {
         setVal('reason', record.reason);
         setVal('notes', record.notes);
 
-        // 3. Locate and unhide the exact modal wrapper around the form
-        const formEl = document.getElementById('recordForm') || (ui && ui.recordForm);
-        const modalContainer = formEl ? (formEl.closest('.fixed') || formEl.closest('div') || formEl.parentElement) : null;
-
-        if (modalContainer) {
-            modalContainer.classList.remove('hidden');
-            modalContainer.style.display = 'flex';
-        } else if (typeof openModal === 'function') {
-            openModal();
-        } else {
-            alert('Modal wrapper element could not be located.');
-        }
     } catch (err) {
         console.error('Error in openEditModal:', err);
-        alert('Error: ' + err.message);
+        alert('Error opening edit form: ' + err.message);
     }
 };
         ui.recordForm.addEventListener('submit', async (e) => {
