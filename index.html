@@ -1010,6 +1010,40 @@ window.returnRecordToCreator = async (recordId) => {
         console.error('Record not found for ID:', recordId);
     }
 };
+        // Global handler to open edit modal for returned records
+window.openEditModal = (recordId) => {
+    const record = records.find(r => String(r.id) === String(recordId));
+    if (!record) {
+        console.error('Record not found:', recordId);
+        return;
+    }
+
+    // Show return feedback comment if present
+    if (record.returnComment) {
+        alert(`Return Feedback from ${record.returnedBy || 'Reviewer'}:\n\n"${record.returnComment}"`);
+    }
+
+    // Populate form fields
+    document.getElementById('recordId').value = record.id;
+    if (document.getElementById('productName')) document.getElementById('productName').value = record.productName || '';
+    if (document.getElementById('studyCategory')) document.getElementById('studyCategory').value = record.studyCategory || '';
+    if (document.getElementById('productType')) document.getElementById('productType').value = record.productType || '';
+    if (document.getElementById('studyDate')) document.getElementById('studyDate').value = record.date || '';
+    if (document.getElementById('stage')) document.getElementById('stage').value = record.stage || '';
+    if (document.getElementById('studyStatus')) document.getElementById('studyStatus').value = record.status || '';
+    if (document.getElementById('scale')) document.getElementById('scale').value = record.scale || '';
+    if (document.getElementById('reason')) document.getElementById('reason').value = record.reason || '';
+    if (document.getElementById('notes')) document.getElementById('notes').value = record.notes || '';
+
+    // Open modal window
+    if (typeof openModal === 'function') {
+        openModal();
+    } else if (ui.recordModal) {
+        ui.recordModal.classList.remove('hidden');
+    } else if (ui.modal) {
+        ui.modal.classList.remove('hidden');
+    }
+};
         ui.recordForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -1020,7 +1054,7 @@ window.returnRecordToCreator = async (recordId) => {
                 productType: document.getElementById('productType').value,
                 date: document.getElementById('studyDate').value,
                 stage: document.getElementById('stage').value,
-                status: document.getElementById('studyStatus').value,
+               status: (records.find(r => String(r.id) === String(id))?.status === STATUS.RETURNED) ? STATUS.PENDING_REVIEW : document.getElementById('studyStatus').value,
                 version: document.getElementById('version').value,
                 scale: document.getElementById('scale').value,
                 reason: document.getElementById('reason').value,
