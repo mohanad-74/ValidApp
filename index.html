@@ -10,18 +10,20 @@
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#1e40af',
-                        secondary: '#3b82f6',
-                        accent: '#10b981',
-                        dark: '#1f2937',
-                        light: '#f3f4f6'
-                    }
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    primary: '#1e40af',
+                    secondary: '#3b82f6',
+                    accent: '#10b981',
+                    dark: '#1f2937',
+                    light: '#f3f4f6'
                 }
             }
+        }
+    }
+</script>
        const convertFileToBase64 = (file) => {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -767,14 +769,16 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
         `;
     }
 
-    const userRole = currentUser?.role || '';
+   const userRole = currentUser?.role || '';
 
     // Section Head or Admin can Review records in Pending Review status
     if ((userRole === 'Section Head' || userRole === 'Admin') && record.status === STATUS.PENDING_REVIEW) {
-                    <i class="fas fa-check-circle mr-1"></i>Review
-                </button>
-            `;
-        }
+        actionButtons += `
+            <button onclick="processAction('${record.id}', '${STATUS.REVIEWED}')" class="text-blue-600 hover:text-blue-800 font-semibold text-xs mr-2" title="Review Record">
+                <i class="fas fa-check-circle mr-1"></i>Review
+            </button>
+        `;
+    }
 
         // QA Manager, Deputy QA Manager, or Admin can Approve or Reject records in Reviewed status
         if ((userRole === 'QA Manager' || userRole === 'Deputy QA Manager' || userRole === 'Admin') && record.status === STATUS.REVIEWED) {
@@ -968,6 +972,17 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
         document.querySelectorAll('.close-user-modal').forEach(btn => btn.addEventListener('click', () => ui.userModal.classList.remove('active')));
 
         // --- Form Submissions & Actions ---
+const convertFileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+    });
+};
+
+ui.recordForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
       ui.recordForm.addEventListener('submit', async (e) => {
     e.preventDefault();
