@@ -36,6 +36,14 @@
       cursor:not-allowed
     }
   </style>
+
+    <!-- EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script>
+      (function() {
+        emailjs.init("YOUR_PUBLIC_KEY");
+      })();
+    </script>
 </head>
 
 <body class="min-h-screen text-slate-800">
@@ -606,11 +614,11 @@
           Save Draft
         </button>
 
-        <button id="submitStudyBtn"
-                type="submit"
-                class="hidden px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-          Submit for Review
-        </button>
+        button id="submitStudyBtn"
+        type="button"
+        class="hidden px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+  Submit for Review
+</button>
 
         <button id="reviewAcceptBtn"
                 type="button"
@@ -1399,6 +1407,32 @@ function currentStageMatches(st){
 /* =========================================================
    AUDIT
 ========================================================= */
+/* =========================================================
+   AUDIT & EMAIL NOTIFICATIONS
+========================================================= */
+
+async function sendAuditTrailEmail(actionType, study, details = '') {
+  if (typeof emailjs === 'undefined') return;
+
+  const templateParams = {
+    action_type: actionType,
+    product_name: study?.productName || 'N/A',
+    study_category: study?.studyCategory || 'N/A',
+    stage: study?.stage || 'N/A',
+    status: study?.status || 'N/A',
+    user_name: currentProfile?.displayName || currentProfile?.email || 'System User',
+    user_role: currentProfile?.role || 'N/A',
+    details: details,
+    timestamp: new Date().toLocaleString()
+  };
+
+  try {
+    await emailjs.send('service_nyq8c6p', 'template_008bbdj', templateParams);
+    console.log('Audit trail email sent successfully.');
+  } catch (err) {
+    console.error('Failed to send audit trail email:', err);
+  }
+}
 
 async function logAction(action, study, details=''){
 
@@ -1410,44 +1444,26 @@ async function logAction(action, study, details=''){
     await addDoc(
       col('audit'),
       {
-
         timestamp: serverTimestamp(),
-
         sortTime: Date.now(),
-
         userUid: currentUser.uid,
-
-        user:
-          currentProfile.displayName ||
-          currentProfile.email,
-
+        user: currentProfile.displayName || currentProfile.email,
         email: currentProfile.email,
-
         role: currentProfile.role,
-
-        department:
-          currentProfile.department || '',
-
+        department: currentProfile.department || '',
         action,
-
-        studyId:
-          study?.id || '',
-
-        product:
-          study?.productName || '',
-
-        details:
-          String(details).slice(0,2000)
-
+        studyId: study?.id || '',
+        product: study?.productName || '',
+        details: String(details).slice(0,2000)
       }
     );
 
+    // Trigger email notification automatically for every logged action
+    sendAuditTrailEmail(action, study, details);
+
   }catch(e){
-
     console.warn('Audit log failed', e);
-
   }
-
 }
 
 
@@ -1923,7 +1939,7 @@ function updateActionButtons(s, editable){
 
 
 /* =========================================================
-   SAVE / SUBMIT STUDY
+   SAVE / SUBMIT STUDY LISTENERS
 ========================================================= */
 
 $('saveDraftBtn')
@@ -1932,27 +1948,27 @@ $('saveDraftBtn')
     () => saveStudy(status.DRAFT)
   );
 
-
 $('submitStudyBtn')
   .addEventListener(
     'click',
-    () => saveStudy(stageForNext(status.DRAFT))
+    () => saveStudy(status.PENDING_SECTION)
   );
-
 
 $('studyForm')
   .addEventListener(
     'submit',
     e => {
-
       e.preventDefault();
-
-      saveStudy(
-        stageForNext(status.DRAFT)
-      );
-
+      saveStudy(status.PENDING_SECTION);
     }
   );
+  await saveStudy(status.PENDING_SECTION);
+});
+
+
+$('studyForm').addEventListener('submit', e => {
+  e.preventDefault();
+});
 
 
 async function saveStudy(
@@ -2069,10 +2085,13 @@ async function saveStudy(
       };
 
 
-      await setDoc(
-        refDoc('records', id),
-        study
-      );
+await setDoc(
+  refDoc('records', newId),
+  study
+);
+
+console.log('STUDY CREATED:', study);
+console.log('STATUS SAVED:', study.status);
 
 
       await logAction(
