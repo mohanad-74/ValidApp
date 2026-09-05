@@ -1024,31 +1024,27 @@ window.returnRecordToCreator = async (recordId) => {
         console.error('Record not found for ID:', recordId);
     }
 };
-// Global handler to open edit modal for returned records
-window.openEditModal = (recordOrId) => {
+// Global handler to open modal for adding or editing records
+window.openEditModal = (recordOrId = {}) => {
     try {
-        // 1. Resolve record object if passed as an ID string/number
-        let record = recordOrId;
-        if (typeof recordOrId !== 'object' || recordOrId === null) {
-            record = records.find(r => String(r.id) === String(recordOrId));
+        let record = recordOrId || {};
+        
+        // Lookup existing record if an ID was passed
+        if (typeof recordOrId === 'string' || typeof recordOrId === 'number') {
+            record = records.find(r => String(r.id) === String(recordOrId)) || {};
         }
 
-        if (!record) {
-            alert('Record not found!');
-            return;
-        }
-
-        // 2. Show feedback prompt if returned by reviewer
+        // Show feedback prompt if present
         if (record.returnComment) {
             alert(`Return Feedback from ${record.returnedBy || 'Reviewer'}:\n\n${record.returnComment}`);
         }
 
-        // 3. Populate form fields
         const setVal = (id, val) => {
             const el = document.getElementById(id);
             if (el) el.value = val !== undefined && val !== null ? val : '';
         };
 
+        // Clear or populate form fields
         document.getElementById('recordId').value = record.id || '';
         setVal('productName', record.productName);
         setVal('studyCategory', record.studyCategory);
@@ -1060,7 +1056,7 @@ window.openEditModal = (recordOrId) => {
         setVal('scale', record.scale);
         setVal('reason', record.reason);
 
-        // 4. Toggle attachment section for Creator role only
+        // Restrict file attachment display strictly to Creator role
         const attachmentSection = document.getElementById('attachmentSection');
         if (attachmentSection) {
             const userRole = (window.currentUser && window.currentUser.role) || localStorage.getItem('userRole') || '';
@@ -1073,7 +1069,7 @@ window.openEditModal = (recordOrId) => {
             }
         }
 
-        // 5. Reveal modal cleanly on user interaction
+        // Reveal modal
         const modal = document.getElementById('recordModal');
         if (modal) {
             modal.style.display = 'flex';
@@ -1081,8 +1077,15 @@ window.openEditModal = (recordOrId) => {
             modal.classList.add('active');
         }
     } catch (err) {
-        console.error('Error opening edit modal:', err);
+        console.error('Error opening modal:', err);
     }
+};
+
+// Alias for Add Record button triggers
+window.openAddModal = () => {
+    const form = document.getElementById('recordForm');
+    if (form) form.reset();
+    window.openEditModal({});
 };
 ui.recordForm.addEventListener('submit', async (e) => {
     e.preventDefault();
