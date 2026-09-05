@@ -26,9 +26,9 @@
     </script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-       .modal { display: none; }
-.modal.active { display: flex !important; }
-.modal.hidden, #recordModal.hidden { display: none !important; }
+        .modal { display: none; }
+        .modal.active { display: flex; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         /* Custom Scrollbar for tables */
@@ -196,7 +196,7 @@
         </div>
     </main>
 
-   <div id="recordModal" style="display: none;" class="hidden modal fixed inset-0 bg-gray-900 bg-opacity-60 z-50 flex items-center justify-center p-4">
+    <div id="recordModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-60 z-50 items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh]">
             <div class="bg-primary text-white p-4 flex justify-between items-center flex-shrink-0">
                 <h3 id="modalTitle" class="text-xl font-bold">Add Validation Record</h3>
@@ -277,27 +277,20 @@
                     </div>
 
                     <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Notes / Reason</label>
-                <textarea id="notes" class="w-full p-2 border border-gray-300 rounded-md" rows="2"></textarea>
-            </div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Reason for Validation / Study *</label>
+                        <textarea id="reason" rows="2" class="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" required placeholder="Why is this study being conducted?"></textarea>
+                    </div>
 
-            <!-- NEW FIELD ADDED HERE -->
-          <div id="attachmentSection" class="hidden mt-4">
-    <label class="block text-xs font-semibold text-gray-700 mb-1">Attach Protocol / Report (PDF, Word)</label>
-    <input 
-        type="file" 
-        id="documentFile" 
-        accept=".pdf,.doc,.docx" 
-        class="w-full text-xs text-gray-500 border border-gray-300 rounded p-1 cursor-pointer" 
-    />
-    <span id="existingFileLabel" class="text-xs text-blue-600 block mt-1 font-medium hidden"></span>
-</div>
-            <!-- Button Row -->
-            <div class="flex justify-end gap-2 pt-4">
-                <button type="button" class="close-modal px-4 py-2 text-sm text-gray-600 border rounded-md hover:bg-gray-50">Cancel</button>
-                <button type="submit" class="px-4 py-2 text-sm text-white bg-primary rounded-md hover:bg-primary-dark">Save Record</button>
-            </div>
-        </form>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Additional Notes (Any)</label>
+                        <textarea id="notes" rows="2" class="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" placeholder="Optional comments..."></textarea>
+                    </div>
+
+                    <div class="pt-4 flex justify-end gap-3 border-t mt-6">
+                        <button type="button" class="close-modal px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-800 transition font-medium">Save Record</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -330,13 +323,11 @@
                     </div>
                     <div class="flex-grow min-w-[150px]">
                         <label class="block text-xs font-medium text-gray-700 mb-1">Privilege Role *</label>
-                        <select id="newRole" class="w-full p-2 border border-gray-300 rounded text-sm">
+                        <select id="newRole" class="w-full p-2 border border-gray-300 rounded text-sm" required>
                             <option value="Administrator">Administrator (Add/Edit)</option>
-                            <option value="Creator">Creator (Add/Edit Studies)</option>
                             <option value="Section Head">Section Head (Review)</option>
-                            <option value="Deputy QA Manager">Deputy QA Manager</option>
                             <option value="QA Manager">QA Manager (Approve)</option>
-                            <option value="Viewer">Viewer (View)</option>
+                            <option value="Deputy QA Manager">Deputy QA Manager</option>
                         </select>
                     </div>
                     <div>
@@ -762,14 +753,7 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
             </a>
         `;
     }
-// Document attachment download link
-        if (record.attachment) {
-            actionButtons += `
-                <a href="${record.attachment.data}" download="${record.attachment.name}" class="inline-flex items-center px-2 py-0.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded text-xs font-medium mr-1" title="Download ${record.attachment.name}">
-                    <i class="fas fa-paperclip text-blue-600 mr-1"></i> Doc
-                </a>
-            `;
-        }
+
     const userRole = currentUser?.role || '';
 
     // 1. REVIEW ACTION (Section Head & Deputy QA Manager)
@@ -908,7 +892,9 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
                 ui.dashboardSection.classList.replace('hidden', 'flex');
                 ui.userInfo.classList.replace('hidden', 'flex');
 
-ui.addRecordBtn.classList.toggle('hidden', !(user.role === ROLES.ADMIN || user.role === ROLES.CREATOR || (user.role && ['admin', 'creator'].includes(user.role.toLowerCase()))));
+                ui.addRecordBtn.classList.toggle('hidden', user.role !== ROLES.ADMIN);
+                ui.userManagementBtn.classList.toggle('hidden', user.role !== ROLES.ADMIN);
+                ui.auditTrailBtn.classList.toggle('hidden', user.role !== ROLES.ADMIN && user.role !== ROLES.APPROVER);
 
                 switchTab(CATEGORIES.PROCESS); 
                 ui.loginForm.reset();
@@ -962,18 +948,14 @@ ui.addRecordBtn.classList.toggle('hidden', !(user.role === ROLES.ADMIN || user.r
             renderTable();
         });
 
-       ui.addRecordBtn.addEventListener('click', () => {
-    document.getElementById('modalTitle').textContent = 'Add New Validation Record';
-    ui.recordForm.reset();
-    document.getElementById('recordId').value = '';
-    document.getElementById('studyCategory').value = currentTabCategory;
-    document.getElementById('studyStatus').value = STATUS.DRAFT;
-    
-    // Explicitly show modal element
-    ui.recordModal.style.display = 'flex';
-    ui.recordModal.classList.remove('hidden');
-    ui.recordModal.classList.add('active');
-});
+        ui.addRecordBtn.addEventListener('click', () => {
+            document.getElementById('modalTitle').textContent = 'Add New Validation Record';
+            ui.recordForm.reset();
+            document.getElementById('recordId').value = '';
+            document.getElementById('studyCategory').value = currentTabCategory; 
+            document.getElementById('studyStatus').value = STATUS.DRAFT; 
+            ui.recordModal.classList.add('active');
+        });
 
         document.querySelectorAll('.close-modal').forEach(btn => btn.addEventListener('click', () => ui.recordModal.classList.remove('active')));
         
@@ -1028,28 +1010,46 @@ window.returnRecordToCreator = async (recordId) => {
         console.error('Record not found for ID:', recordId);
     }
 };
-// Global handler to open modal for adding or editing records
-window.openEditModal = (recordOrId = {}) => {
+// Global handler to open edit modal for returned records
+window.openEditModal = (recordId) => {
     try {
-        let record = recordOrId || {};
-        
-        // Lookup existing record if an ID was passed
-        if (typeof recordOrId === 'string' || typeof recordOrId === 'number') {
-            record = records.find(r => String(r.id) === String(recordOrId)) || {};
+        const record = records.find(r => String(r.id) === String(recordId));
+        if (!record) {
+            alert('Record not found!');
+            return;
         }
 
-        // Show feedback prompt if present
+        // 1. Show feedback prompt
         if (record.returnComment) {
-            alert(`Return Feedback from ${record.returnedBy || 'Reviewer'}:\n\n${record.returnComment}`);
+            alert(`Return Feedback from ${record.returnedBy || 'Reviewer'}:\n\n"${record.returnComment}"`);
         }
 
+        // 2. Trigger native modal trigger via "+ Add Record" button
+        const addBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Add Record'));
+        if (addBtn) {
+            addBtn.click();
+        }
+
+        // Unhide all parent containers of the record form
+        const formEl = document.getElementById('recordForm') || (typeof ui !== 'undefined' && ui?.recordForm);
+        if (formEl) {
+            let current = formEl;
+            while (current && current !== document.body) {
+                current.classList.remove('hidden');
+                if (window.getComputedStyle(current).display === 'none') {
+                    current.style.display = 'flex';
+                }
+                current = current.parentElement;
+            }
+        }
+
+        // 3. Populate form fields with returned record data
         const setVal = (id, val) => {
             const el = document.getElementById(id);
             if (el) el.value = val !== undefined && val !== null ? val : '';
         };
 
-        // Clear or populate form fields
-        document.getElementById('recordId').value = record.id || '';
+        setVal('recordId', record.id);
         setVal('productName', record.productName);
         setVal('studyCategory', record.studyCategory);
         setVal('productType', record.productType);
@@ -1059,61 +1059,30 @@ window.openEditModal = (recordOrId = {}) => {
         setVal('version', record.version);
         setVal('scale', record.scale);
         setVal('reason', record.reason);
+        setVal('notes', record.notes);
 
-        // Restrict file attachment display strictly to Creator role
-        const attachmentSection = document.getElementById('attachmentSection');
-        if (attachmentSection) {
-            const userRole = (window.currentUser && window.currentUser.role) || localStorage.getItem('userRole') || '';
-            if (userRole.toLowerCase() === 'creator') {
-                attachmentSection.classList.remove('hidden');
-                attachmentSection.style.display = 'block';
-            } else {
-                attachmentSection.classList.add('hidden');
-                attachmentSection.style.display = 'none';
-            }
-        }
-
-        // Reveal modal
-        const modal = document.getElementById('recordModal');
-        if (modal) {
-            modal.style.display = 'flex';
-            modal.classList.remove('hidden');
-            modal.classList.add('active');
-        }
     } catch (err) {
-        console.error('Error opening modal:', err);
+        console.error('Error in openEditModal:', err);
+        alert('Error opening edit form: ' + err.message);
     }
 };
-
-// Alias for Add Record button triggers
-window.openAddModal = () => {
-    const form = document.getElementById('recordForm');
-    if (form) form.reset();
-    window.openEditModal({});
+        ui.recordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const id = document.getElementById('recordId').value;
+            const data = {
+                productName: document.getElementById('productName').value,
+                studyCategory: document.getElementById('studyCategory').value,
+                productType: document.getElementById('productType').value,
+                date: document.getElementById('studyDate').value,
+                stage: document.getElementById('stage').value,
+               status: (records.find(r => String(r.id) === String(id))?.status === STATUS.RETURNED) ? STATUS.PENDING_REVIEW : document.getElementById('studyStatus').value,
+                version: document.getElementById('version').value,
+                scale: document.getElementById('scale').value,
+                reason: document.getElementById('reason').value,
+              notes: document.getElementById('notes').value,
+createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.username) : currentUser.username
 };
-ui.recordForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const id = document.getElementById('recordId').value;
-
-    // Retrieve file or preserve existing attachment
-    const existingRecord = records.find(r => String(r.id) === String(id));
-    const newFile = await getAttachedFile();
-    const attachment = newFile || (existingRecord ? existingRecord.attachment : null);
-
-    const data = {
-        productName: document.getElementById('productName').value,
-        studyCategory: document.getElementById('studyCategory').value,
-        productType: document.getElementById('productType').value,
-        date: document.getElementById('studyDate').value,
-        stage: document.getElementById('stage').value,
-        status: (records.find(r => String(r.id) === String(id))?.status === STATUS.RETURNED) ? STATUS.PENDING_REVIEW : document.getElementById('studyStatus').value,
-        version: document.getElementById('version').value,
-        scale: document.getElementById('scale').value,
-        reason: document.getElementById('reason').value,
-        notes: document.getElementById('notes').value,
-        attachment: attachment,
-        createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.username) : currentUser.username
-    };
           
 
             if (id) {
@@ -1236,10 +1205,11 @@ ui.recordForm.addEventListener('submit', async (e) => {
 
             const newUser = { username: newU, password: newP, role: newR };
             if (db) {
-        await setDoc(getDocRef('users', newU), newUser);
-    }
-    USERS.push(newUser);
-    renderUserList();
+                await setDoc(getDocRef('users', newU), newUser);
+            } else {
+                USERS.push(newUser);
+                renderUserList();
+            }
             document.getElementById('userForm').reset();
             showMessage('Success', 'User added successfully.', 'success');
         });
@@ -1271,27 +1241,7 @@ ui.recordForm.addEventListener('submit', async (e) => {
         renderTable();
     }
 };
-const getAttachedFile = () => {
-    return new Promise((resolve) => {
-        const fileInput = document.getElementById('documentFile');
-        if (!fileInput || !fileInput.files || !fileInput.files[0]) {
-            resolve(null);
-            return;
-        }
 
-        const file = fileInput.files[0];
-        if (file.size > 5 * 1024 * 1024) {
-            alert('File exceeds 5MB limit. Saving record without new attachment.');
-            resolve(null);
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = () => resolve({ name: file.name, data: reader.result, type: file.type });
-        reader.onerror = () => resolve(null);
-        reader.readAsDataURL(file);
-    });
-};
 window.updateDelegationUI = function() {
     const btn = document.getElementById('delegationBtn');
     if (!btn) return;
