@@ -1025,89 +1025,65 @@ window.returnRecordToCreator = async (recordId) => {
     }
 };
 // Global handler to open edit modal for returned records
-window.openEditModal = (recordId) => {
+window.openEditModal = (recordOrId) => {
     try {
-        const record = records.find(r => String(r.id) === String(recordId));
+        // 1. Resolve record object if passed as an ID string/number
+        let record = recordOrId;
+        if (typeof recordOrId !== 'object' || recordOrId === null) {
+            record = records.find(r => String(r.id) === String(recordOrId));
+        }
+
         if (!record) {
             alert('Record not found!');
             return;
         }
 
-        // 1. Show feedback prompt
+        // 2. Show feedback prompt if returned by reviewer
         if (record.returnComment) {
-            alert(`Return Feedback from ${record.returnedBy || 'Reviewer'}:\n\n"${record.returnComment}"`);
+            alert(`Return Feedback from ${record.returnedBy || 'Reviewer'}:\n\n${record.returnComment}`);
         }
 
-       // 2. Trigger native modal trigger via "+ Add Record" button
-        const addBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Add Record'));
-        if (addBtn) {
-            addBtn.click();
-        }
+        // 3. Populate form fields
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val !== undefined && val !== null ? val : '';
+        };
 
-        // Handle file label in edit mode
-        const fileInput = document.getElementById('documentFile');
-        const fileLabel = document.getElementById('existingFileLabel');
-        if (fileInput) fileInput.value = '';
-        if (fileLabel) {
-            if (record.attachment) {
-                fileLabel.textContent = `Attached: ${record.attachment.name}`;
-                fileLabel.classList.remove('hidden');
+        document.getElementById('recordId').value = record.id || '';
+        setVal('productName', record.productName);
+        setVal('studyCategory', record.studyCategory);
+        setVal('productType', record.productType);
+        setVal('studyDate', record.date || record.studyDate);
+        setVal('stage', record.stage);
+        setVal('studyStatus', record.status);
+        setVal('version', record.version);
+        setVal('scale', record.scale);
+        setVal('reason', record.reason);
+
+        // 4. Toggle attachment section for Creator role only
+        const attachmentSection = document.getElementById('attachmentSection');
+        if (attachmentSection) {
+            const userRole = (window.currentUser && window.currentUser.role) || localStorage.getItem('userRole') || '';
+            if (userRole.toLowerCase() === 'creator') {
+                attachmentSection.classList.remove('hidden');
+                attachmentSection.style.display = 'block';
             } else {
-                fileLabel.classList.add('hidden');
+                attachmentSection.classList.add('hidden');
+                attachmentSection.style.display = 'none';
             }
+        }
+
+        // 5. Reveal modal cleanly on user interaction
+        const modal = document.getElementById('recordModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.remove('hidden');
+            modal.classList.add('active');
         }
     } catch (err) {
         console.error('Error opening edit modal:', err);
     }
 };
-        // Unhide all parent containers of the record form
-        const formEl = document.getElementById('recordForm') || (typeof ui !== 'undefined' && ui?.recordForm);
-        if (formEl) {
-            let current = formEl;
-            while (current && current !== document.body) {
-                current.classList.remove('hidden');
-                if (window.getComputedStyle(current).display === 'none') {
-                    current.style.display = 'flex';
-                }
-                current = current.parentElement;
-            }
-        }
-
-        // 3. Populate form fields with returned record data
-        const setVal = (id, val) => {
-            const el = document.getElementById(id);
-            if (el) el.value = val !== undefined && val !== null ? val : '';
-        };
-window.openEditModal = (record = {}) => {
-    document.getElementById('recordId').value = record.id || '';
-    setVal('productName', record.productName);
-    setVal('studyCategory', record.studyCategory);
-    setVal('productType', record.productType);
-    setVal('studyDate', record.date || record.studyDate);
-    setVal('stage', record.stage);
-    setVal('studyStatus', record.status);
-    setVal('version', record.version);
-    setVal('scale', record.scale);
-    setVal('reason', record.reason);
-
-    // 1. Toggle file attachment visibility for Creator role only
-    const attachmentSection = document.getElementById('attachmentSection');
-    if (attachmentSection) {
-        const userRole = (window.currentUser && window.currentUser.role) || localStorage.getItem('userRole') || '';
-        if (userRole.toLowerCase() === 'creator') {
-            attachmentSection.classList.remove('hidden');
-        } else {
-            attachmentSection.classList.add('hidden');
-        }
-    }
-
-    // 2. Safely reveal modal on user click
-   const modal = document.getElementById('recordModal');
-if (modal) {
-    modal.style.display = 'flex';
-    modal.classList.remove('hidden');
-    modal.classList.add('active');
-}
 };
 ui.recordForm.addEventListener('submit', async (e) => {
     e.preventDefault();
