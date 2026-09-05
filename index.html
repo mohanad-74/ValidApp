@@ -1078,18 +1078,18 @@ window.openEditModal = (recordId) => {
             const el = document.getElementById(id);
             if (el) el.value = val !== undefined && val !== null ? val : '';
         };
-
-        setVal('recordId', record.id);
-        setVal('productName', record.productName);
-        setVal('studyCategory', record.studyCategory);
-        setVal('productType', record.productType);
-        setVal('studyDate', record.date || record.studyDate);
-        setVal('stage', record.stage);
-        setVal('studyStatus', record.status);
-        setVal('version', record.version);
-        setVal('reason', record.reason);
+window.openEditModal = (record) => {
+    document.getElementById('recordId').value = record.id || '';
+    setVal('productName', record.productName);
+    setVal('studyCategory', record.studyCategory);
+    setVal('productType', record.productType);
+    setVal('studyDate', record.date || record.studyDate);
+    setVal('stage', record.stage);
+    setVal('studyStatus', record.status);
+    setVal('version', record.version);
+    setVal('scale', record.scale);
+    setVal('reason', record.reason);
 };
-
 ui.recordForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('recordId').value;
