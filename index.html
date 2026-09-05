@@ -906,8 +906,7 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
                 ui.dashboardSection.classList.replace('hidden', 'flex');
                 ui.userInfo.classList.replace('hidden', 'flex');
 
-                ui.addRecordBtn.classList.toggle('hidden', user.role !== ROLES.ADMIN);
-                ui.userManagementBtn.classList.toggle('hidden', user.role !== ROLES.ADMIN);
+ui.addRecordBtn.classList.toggle('hidden', !['admin', 'creator'].includes((user.role || '').toLowerCase()));                ui.userManagementBtn.classList.toggle('hidden', user.role !== ROLES.ADMIN);
                 ui.auditTrailBtn.classList.toggle('hidden', user.role !== ROLES.ADMIN && user.role !== ROLES.APPROVER);
 
                 switchTab(CATEGORIES.PROCESS); 
@@ -962,14 +961,18 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
             renderTable();
         });
 
-        ui.addRecordBtn.addEventListener('click', () => {
-            document.getElementById('modalTitle').textContent = 'Add New Validation Record';
-            ui.recordForm.reset();
-            document.getElementById('recordId').value = '';
-            document.getElementById('studyCategory').value = currentTabCategory; 
-            document.getElementById('studyStatus').value = STATUS.DRAFT; 
-            ui.recordModal.classList.add('active');
-        });
+       ui.addRecordBtn.addEventListener('click', () => {
+    document.getElementById('modalTitle').textContent = 'Add New Validation Record';
+    ui.recordForm.reset();
+    document.getElementById('recordId').value = '';
+    document.getElementById('studyCategory').value = currentTabCategory;
+    document.getElementById('studyStatus').value = STATUS.DRAFT;
+    
+    // Explicitly show modal element
+    ui.recordModal.style.display = 'flex';
+    ui.recordModal.classList.remove('hidden');
+    ui.recordModal.classList.add('active');
+});
 
         document.querySelectorAll('.close-modal').forEach(btn => btn.addEventListener('click', () => ui.recordModal.classList.remove('active')));
         
