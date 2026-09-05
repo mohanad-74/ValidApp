@@ -1089,17 +1089,15 @@ window.openEditModal = (recordId) => {
         setVal('version', record.version);
         setVal('scale', record.scale);
         setVal('reason', record.reason);
-        setVal('notes', record.notes);
-
     } catch (err) {
-        console.error('Error in openEditModal:', err);
-        alert('Error opening edit form: ' + err.message);
+        console.error('Error opening edit modal:', err);
     }
 };
-        ui.recordForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const id = document.getElementById('recordId').value;
+
+ui.recordForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById('recordId').value;
 
     // Retrieve file or preserve existing attachment
     const existingRecord = records.find(r => String(r.id) === String(id));
