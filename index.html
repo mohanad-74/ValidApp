@@ -1,1264 +1,212 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ValidApp - Validation Study Tracker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- EmailJS Library -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#1e40af',
-                        secondary: '#3b82f6',
-                        accent: '#10b981',
-                        dark: '#1f2937',
-                        light: '#f3f4f6'
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .modal { display: none; }
-        .modal.active { display: flex; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        /* Custom Scrollbar for tables */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ValidApp V2 — Validation Study Workflow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <style>
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f6fb}
+    .modal{display:none}.modal.active{display:flex}.pill{font-size:.72rem;font-weight:700;border-radius:9999px;padding:.25rem .6rem;border:1px solid}
+    .dropzone.drag{border-color:#2563eb;background:#eff6ff}
+  </style>
 </head>
-<body class="text-gray-800 h-screen flex flex-col overflow-hidden">
+<body class="min-h-screen text-slate-800">
+<nav class="bg-slate-900 text-white sticky top-0 z-40 shadow-lg">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center"><i class="fa-solid fa-flask"></i></div><div><div class="text-xl font-bold">ValidApp</div><div class="text-xs text-slate-300">Validation Study Workflow</div></div></div>
+    <div id="sessionArea" class="hidden items-center gap-3">
+      <div class="text-right"><div id="userName" class="font-semibold text-sm"></div><div id="userRole" class="text-xs text-slate-300"></div></div>
+      <button id="auditBtn" class="hidden px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm"><i class="fa-solid fa-clock-rotate-left mr-1"></i>Audit Trail</button>
+      <button id="usersBtn" class="hidden px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm"><i class="fa-solid fa-users-gear mr-1"></i>Users</button>
+      <button id="logoutBtn" class="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-sm"><i class="fa-solid fa-right-from-bracket mr-1"></i>Logout</button>
+    </div>
+  </div>
+</nav>
 
-    <nav class="bg-primary text-white shadow-lg p-4 sticky top-0 z-50 flex-shrink-0">
-        <div class="container mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <i class="fas fa-flask text-2xl"></i>
-                <h1 class="text-2xl font-bold tracking-wider">ValidApp</h1>
-            </div>
-            <div id="userInfo" class="hidden items-center gap-4">
-                <span class="bg-blue-800 px-3 py-1 rounded-full text-sm font-semibold border border-blue-400">
-                    <i class="fas fa-user-circle mr-1"></i> <span id="currentUserDisplay"></span> (<span id="currentUserRole"></span>)
-                </span>
-                <button id="userManagementBtn" class="hidden hover:bg-blue-700 px-3 py-1 rounded transition duration-200">
-                    <i class="fas fa-users-cog mr-1"></i> Users
-                </button>
-                <button id="auditTrailBtn" class="hidden hover:bg-blue-700 px-3 py-1 rounded transition duration-200">
-                    <i class="fas fa-history mr-1"></i> Audit Trail
-                </button>
-                <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 px-4 py-1.5 rounded font-semibold transition duration-200 shadow">
-                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
-                </button>
-            </div>
-        </div>
-    </nav>
+<main class="max-w-7xl mx-auto px-4 py-6">
+  <section id="loginView" class="max-w-md mx-auto mt-12 bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
+    <div class="text-center mb-7"><div class="inline-flex w-16 h-16 rounded-2xl bg-blue-100 text-blue-700 items-center justify-center text-3xl mb-4"><i class="fa-solid fa-shield-halved"></i></div><h1 class="text-2xl font-bold">Secure Sign In</h1><p class="text-slate-500 text-sm mt-1">Use your ValidApp account.</p></div>
+    <form id="loginForm" class="space-y-4">
+      <div><label class="block text-sm font-medium mb-1">Email</label><input id="loginEmail" type="email" required class="w-full px-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"></div>
+      <div><label class="block text-sm font-medium mb-1">Password</label><input id="loginPassword" type="password" required class="w-full px-3 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"></div>
+      <div id="loginError" class="hidden text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2"></div>
+      <button class="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold"><i class="fa-solid fa-right-to-bracket mr-2"></i>Sign In</button>
+    </form>
+    <div class="mt-5 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-3">This V2 build uses Firebase Authentication. Create/enable Email & Password accounts in Firebase and assign each user's role in the Users screen or Firebase Console.</div>
+  </section>
 
-    <main class="flex-grow container mx-auto p-4 relative flex flex-col h-full overflow-hidden">
-        
-        <div id="loginSection" class="max-w-md mx-auto mt-20 bg-white p-8 rounded-xl shadow-2xl border border-gray-100 fade-in flex-shrink-0">
-            <div class="text-center mb-8">
-                <div class="inline-block bg-blue-100 p-4 rounded-full mb-4">
-                    <i class="fas fa-shield-alt text-4xl text-primary"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-gray-800">System Login</h2>
-                <p class="text-gray-500 text-sm mt-1">Please enter your credentials to continue</p>
-            </div>
-            
-            <form id="loginForm" class="space-y-5">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-user text-gray-400"></i>
-                        </div>
-                        <input type="text" id="username" class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition" required placeholder="Username">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-lock text-gray-400"></i>
-                        </div>
-                        <input type="password" id="password" class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition" required placeholder="••••••••">
-                    </div>
-                </div>
-                <div id="loginError" class="text-red-500 text-sm hidden font-medium text-center bg-red-50 p-2 rounded">Invalid username or password.</div>
-                <button type="submit" class="w-full bg-primary hover:bg-blue-800 text-white font-bold py-2.5 px-4 rounded-lg transition duration-200 shadow-md">
-                    Sign In
-                </button>
-            </form>
-        </div>
+  <section id="appView" class="hidden">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5">
+      <div><h2 class="text-2xl font-bold">Studies</h2><p id="scopeText" class="text-sm text-slate-500"></p></div>
+      <button id="newStudyBtn" class="hidden px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow"><i class="fa-solid fa-plus mr-2"></i>Create Study</button>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+      <input id="searchInput" placeholder="Search product / study" class="px-3 py-2 rounded-lg border border-slate-300 outline-none focus:ring-2 focus:ring-blue-500">
+      <select id="categoryFilter" class="px-3 py-2 rounded-lg border border-slate-300"><option value="All">All categories</option><option>Process Validation</option><option>Hold Time Study</option><option>Cleaning Validation</option></select>
+      <select id="statusFilter" class="px-3 py-2 rounded-lg border border-slate-300"><option value="All">All statuses</option><option>Draft</option><option>Pending Section Head</option><option>Pending Reviewer</option><option>Pending Deputy QA</option><option>Pending QA Manager</option><option>Returned for Revision</option><option>Approved</option><option>Rejected</option></select>
+      <button id="clearFilterBtn" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 font-medium">Clear filters</button>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="overflow-x-auto"><table class="min-w-full"><thead class="bg-slate-50 border-b"><tr>
+        <th class="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">Study</th><th class="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">Category</th><th class="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">Creator</th><th class="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">Status</th><th class="px-4 py-3 text-left text-xs font-bold uppercase text-slate-500">Updated</th><th class="px-4 py-3 text-right text-xs font-bold uppercase text-slate-500">Actions</th>
+      </tr></thead><tbody id="studyTable" class="divide-y divide-slate-100"></tbody></table></div>
+      <div id="emptyState" class="hidden p-12 text-center text-slate-400"><i class="fa-solid fa-folder-open text-4xl mb-3"></i><div>No studies found.</div></div>
+    </div>
+  </section>
+</main>
 
-        <div id="dashboardSection" class="hidden fade-in flex-col h-full overflow-hidden">
-            
-            <!-- Dashboard Tabs & Header -->
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 mt-2 gap-4 flex-shrink-0">
-                <div class="flex bg-gray-200 p-1 rounded-lg overflow-x-auto w-full md:w-auto">
-                    <button id="tabProcess" class="tab-btn active bg-white text-primary shadow-sm px-4 py-2 rounded-md font-semibold transition-all whitespace-nowrap">Process Validation</button>
-                    <button id="tabHoldTime" class="tab-btn text-gray-600 hover:text-gray-900 px-4 py-2 rounded-md font-semibold transition-all whitespace-nowrap">Hold Time Studies</button>
-                    <button id="tabCleaning" class="tab-btn text-gray-600 hover:text-gray-900 px-4 py-2 rounded-md font-semibold transition-all whitespace-nowrap">Cleaning Validation</button>
-                </div>
-                <button id="addRecordBtn" class="hidden bg-accent hover:bg-green-600 text-white px-5 py-2 rounded-lg font-semibold shadow transition duration-200 whitespace-nowrap">
-                    <i class="fas fa-plus mr-2"></i> Add Record
-                </button>
-            </div>
+<!-- Study modal -->
+<div id="studyModal" class="modal fixed inset-0 bg-slate-900/60 z-50 items-center justify-center p-4">
+<div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[94vh] overflow-hidden flex flex-col">
+  <div class="bg-blue-700 text-white px-5 py-4 flex justify-between items-center"><div><div id="studyModalTitle" class="text-xl font-bold">Create Study</div><div id="studyModalSub" class="text-xs text-blue-100"></div></div><button data-close="studyModal" class="text-white/80 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button></div>
+  <form id="studyForm" class="overflow-y-auto p-5 space-y-5">
+    <input type="hidden" id="studyId">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="md:col-span-2"><label class="block text-sm font-medium mb-1">Product / API Name *</label><input id="productName" required class="w-full px-3 py-2 rounded-lg border border-slate-300"></div>
+      <div><label class="block text-sm font-medium mb-1">Study Category *</label><select id="studyCategory" required class="w-full px-3 py-2 rounded-lg border border-slate-300"><option>Process Validation</option><option>Hold Time Study</option><option>Cleaning Validation</option></select></div>
+      <div><label class="block text-sm font-medium mb-1">Product Type *</label><select id="productType" required class="w-full px-3 py-2 rounded-lg border border-slate-300"><option>Finished Product</option><option>Bulk Product</option><option>API</option></select></div>
+      <div><label class="block text-sm font-medium mb-1">Study Date *</label><input id="studyDate" type="date" required class="w-full px-3 py-2 rounded-lg border border-slate-300"></div>
+      <div><label class="block text-sm font-medium mb-1">Stage *</label><select id="stage" required class="w-full px-3 py-2 rounded-lg border border-slate-300"><option>Raw</option><option>Bulk</option><option>Finished Product</option><option>Cleaning Validation</option><option>CHT</option><option>DHT</option><option>Campaign Length</option></select></div>
+      <div><label class="block text-sm font-medium mb-1">Version *</label><input id="version" value="v1.0" required class="w-full px-3 py-2 rounded-lg border border-slate-300"></div>
+      <div><label class="block text-sm font-medium mb-1">Scale *</label><select id="scale" required class="w-full px-3 py-2 rounded-lg border border-slate-300"><option>Lab Scale</option><option>Pilot Scale</option><option>Commercial Scale</option></select></div>
+      <div><label class="block text-sm font-medium mb-1">Reviewer Department</label><input id="reviewerDepartment" placeholder="e.g. Production, QC, Engineering" class="w-full px-3 py-2 rounded-lg border border-slate-300"></div>
+    </div>
+    <div><label class="block text-sm font-medium mb-1">Reason for Validation / Study *</label><textarea id="reason" rows="3" required class="w-full px-3 py-2 rounded-lg border border-slate-300"></textarea></div>
+    <div><label class="block text-sm font-medium mb-1">Notes</label><textarea id="notes" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-300"></textarea></div>
 
-            <!-- Dashboard Filters & Search -->
-            <div class="bg-white p-4 rounded-t-xl shadow-sm border border-gray-200 border-b-0 flex flex-wrap gap-4 items-end flex-shrink-0">
-                <div class="flex-grow min-w-[200px]">
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Search Product / API</label>
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                        <input type="text" id="searchInput" class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary text-sm" placeholder="Search by name...">
-                    </div>
-                </div>
-                
-                <div class="w-full md:w-auto min-w-[150px]">
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Study Stage</label>
-                    <select id="filterStage" class="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-primary">
-                        <option value="All">All Stages</option>
-                        <option value="Raw">Raw</option>
-                        <option value="Bulk">Bulk</option>
-                        <option value="Finished Product">Finished Product</option>
-                        <option value="Cleaning Validation">Cleaning Validation</option>
-                        <option value="CHT">CHT</option>
-                        <option value="DHT">DHT</option>
-                        <option value="Campaign Length">Campaign Length</option>
-                    </select>
-                </div>
-
-                <div class="w-full md:w-auto min-w-[150px]">
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Status</label>
-                    <select id="filterStatus" class="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-primary">
-                        <option value="All">All Statuses</option>
-                        <option value="Draft">Draft</option>
-                        <option value="Pending Review">Pending Review</option>
-                        <option value="Reviewed">Reviewed</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Rejected">Rejected</option>
-                    </select>
-                </div>
-
-                <div class="w-full md:w-auto min-w-[150px]">
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Scale</label>
-                    <select id="filterScale" class="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-primary">
-                        <option value="All">All Scales</option>
-                        <option value="Lab Scale">Lab Scale</option>
-                        <option value="Pilot Scale">Pilot Scale</option>
-                        <option value="Commercial Scale">Commercial</option>
-                    </select>
-                </div>
-                
-                <div class="w-full md:w-auto">
-                    <button id="clearFiltersBtn" class="px-4 py-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md transition text-sm font-medium">
-                        Clear Filters
-                    </button>
-                </div>
-            </div>
-
-            <!-- Data Table -->
-            <div class="bg-white rounded-b-xl shadow-md border border-gray-200 flex-grow overflow-hidden flex flex-col relative">
-                <div class="overflow-auto flex-grow h-full">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50 sticky top-0 z-10 shadow-sm">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Product / API Name</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date & Stage</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Scale & Ver</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Reason / Notes</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dataTableBody" class="bg-white divide-y divide-gray-200 text-sm">
-                            <!-- Table rows populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Empty State -->
-                <div id="emptyState" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-white z-20">
-                    <i class="fas fa-search text-5xl text-gray-300 mb-4"></i>
-                    <p class="text-gray-500 text-lg">No records match your criteria.</p>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <div id="recordModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-60 z-50 items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh]">
-            <div class="bg-primary text-white p-4 flex justify-between items-center flex-shrink-0">
-                <h3 id="modalTitle" class="text-xl font-bold">Add Validation Record</h3>
-                <button class="close-modal text-white hover:text-gray-200 transition">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            <div class="p-6 overflow-y-auto flex-grow">
-                <form id="recordForm" class="space-y-4">
-                    <input type="hidden" id="recordId">
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Product / API Name *</label>
-                            <input type="text" id="productName" class="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" required>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Study Category *</label>
-                            <select id="studyCategory" class="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" required>
-                                <option value="Process Validation">Process Validation</option>
-                                <option value="Hold Time Study">Hold Time Study</option>
-                                <option value="Cleaning Validation">Cleaning Validation</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Product Type *</label>
-                            <select id="productType" class="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" required>
-                                <option value="Finished Product">Finished Product</option>
-                                <option value="Bulk Product">Bulk Product</option>
-                                <option value="API">API</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Study Date *</label>
-                            <input type="date" id="studyDate" class="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" required>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Stage *</label>
-                            <select id="stage" class="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" required>
-                                <option value="Raw">Raw</option>
-                                <option value="Bulk">Bulk</option>
-                                <option value="Finished Product">Finished Product</option>
-                                <option value="Cleaning Validation">Cleaning Validation</option>
-                                <option value="CHT">CHT</option>
-                                <option value="DHT">DHT</option>
-                                <option value="Campaign Length">Campaign Length</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Study Status *</label>
-                            <select id="studyStatus" class="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" required>
-                                <option value="Draft">Draft</option>
-                                <option value="Pending Review">Pending Review</option>
-                                <option value="Reviewed">Reviewed</option>
-                                <option value="Approved">Approved</option>
-                                <option value="Rejected">Rejected</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Version *</label>
-                            <input type="text" id="version" class="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" required placeholder="e.g., v1.0">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Scale *</label>
-                            <select id="scale" class="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" required>
-                                <option value="Lab Scale">Lab Scale</option>
-                                <option value="Pilot Scale">Pilot Scale</option>
-                                <option value="Commercial Scale">Commercial Scale</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Reason for Validation / Study *</label>
-                        <textarea id="reason" rows="2" class="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" required placeholder="Why is this study being conducted?"></textarea>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Additional Notes (Any)</label>
-                        <textarea id="notes" rows="2" class="w-full p-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" placeholder="Optional comments..."></textarea>
-                    </div>
-
-                    <div class="pt-4 flex justify-end gap-3 border-t mt-6">
-                        <button type="button" class="close-modal px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-800 transition font-medium">Save Record</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+    <div id="documentSection">
+      <div class="flex items-center justify-between mb-2"><div><h3 class="font-bold">Study Documents</h3><p class="text-xs text-slate-500">Creator only. PDF, Word and Excel. Max 25 MB per file.</p></div><label id="uploadLabel" class="hidden cursor-pointer px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm"><i class="fa-solid fa-upload mr-1"></i>Add Files<input id="fileInput" type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden"></label></div>
+      <div id="dropzone" class="dropzone border-2 border-dashed border-slate-300 rounded-xl p-5 text-center text-slate-500"><i class="fa-solid fa-file-arrow-up text-2xl mb-2"></i><div>Drop files here or use Add Files</div><div class="text-xs mt-1">Allowed: PDF / DOC / DOCX / XLS / XLSX</div></div>
+      <div id="documentList" class="mt-3 space-y-2"></div>
     </div>
 
-    <div id="userModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-60 z-50 items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
-            <div class="bg-dark text-white p-4 flex justify-between items-center rounded-t-xl flex-shrink-0">
-               <h3 class="text-xl font-bold"><i class="fas fa-users-cog mr-2"></i>User Management</h3>
+    <div id="reviewHistorySection" class="border-t pt-4"><div class="flex justify-between items-center mb-2"><h3 class="font-bold">Review & Comment History</h3><span class="text-xs text-slate-500">Permanent history</span></div><div id="reviewHistory" class="space-y-2"></div></div>
+    <div id="returnBanner" class="hidden rounded-xl border border-amber-300 bg-amber-50 p-4"><div class="font-bold text-amber-900"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Returned for Revision</div><div id="returnBannerText" class="text-sm text-amber-900 mt-1"></div></div>
 
-<!-- DELEGATION CONTROL SWITCH -->
-<div class="flex items-center gap-2 bg-gray-100 p-2 rounded border">
-    <span class="text-xs font-semibold text-gray-700">Deputy QA Delegation:</span>
-    <button id="delegationBtn" type="button" onclick="toggleDelegation()" class="px-3 py-1 text-xs font-bold rounded text-white bg-red-600 hover:bg-red-700 cursor-pointer">
-        OFF
-    </button>
-</div>
-                <button class="close-user-modal text-white hover:text-gray-300 transition">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            <div class="p-4 bg-gray-50 border-b">
-                <form id="userForm" class="flex flex-wrap items-end gap-3">
-                    <div class="flex-grow min-w-[150px]">
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Username *</label>
-                        <input type="text" id="newUsername" class="w-full p-2 border border-gray-300 rounded text-sm" required>
-                    </div>
-                    <div class="flex-grow min-w-[150px]">
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Password *</label>
-                        <input type="password" id="newPassword" class="w-full p-2 border border-gray-300 rounded text-sm" required>
-                    </div>
-                    <div class="flex-grow min-w-[150px]">
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Privilege Role *</label>
-                        <select id="newRole" class="w-full p-2 border border-gray-300 rounded text-sm" required>
-                            <option value="Administrator">Administrator (Add/Edit)</option>
-                            <option value="Section Head">Section Head (Review)</option>
-                            <option value="QA Manager">QA Manager (Approve)</option>
-                            <option value="Deputy QA Manager">Deputy QA Manager</option>
-                        </select>
-                    </div>
-                    <div>
-                        <button type="submit" class="bg-accent hover:bg-green-600 text-white px-4 py-2 rounded font-semibold text-sm h-[38px]">Add User</button>
-                    </div>
-                </form>
-            </div>
-            <div class="overflow-auto flex-grow p-0">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-100 sticky top-0">
-                        <tr>
-                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Username</th>
-                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Role</th>
-                            <th class="px-4 py-2 text-center text-xs font-semibold text-gray-600 uppercase">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="userTableBody" class="bg-white divide-y divide-gray-200 text-sm">
-                        <!-- User list populated dynamically -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <div class="flex flex-wrap justify-end gap-2 border-t pt-4">
+      <button type="button" data-close="studyModal" class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200">Close</button>
+      <button id="saveDraftBtn" type="button" class="hidden px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white">Save Draft</button>
+      <button id="submitStudyBtn" type="submit" class="hidden px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">Submit for Review</button>
+      <button id="reviewAcceptBtn" type="button" class="hidden px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">Complete Review</button>
+      <button id="returnBtn" type="button" class="hidden px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold">Return to Creator</button>
+      <button id="approveBtn" type="button" class="hidden px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-semibold">Approve</button>
+      <button id="rejectBtn" type="button" class="hidden px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold">Reject</button>
     </div>
+  </form>
+</div></div>
 
-    <div id="auditModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-60 z-50 items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl flex flex-col h-[85vh]">
-            <div class="bg-dark text-white p-4 flex justify-between items-center rounded-t-xl flex-shrink-0">
-                <h3 class="text-xl font-bold"><i class="fas fa-list-alt mr-2"></i>System Audit Trail</h3>
-                <button class="close-audit text-white hover:text-gray-300 transition">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            <div class="p-0 overflow-hidden flex-grow flex flex-col">
-                <div class="overflow-auto flex-grow">
-                    <table class="min-w-full divide-y divide-gray-200 relative">
-                        <thead class="bg-gray-100 sticky top-0 z-10 shadow-sm">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Timestamp</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">User / Role</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Action</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Product</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Audit Details</th>
-                            </tr>
-                        </thead>
-                        <tbody id="auditTableBody" class="bg-white divide-y divide-gray-200 text-sm">
-                            <!-- Audit logs go here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- Review comment modal -->
+<div id="commentModal" class="modal fixed inset-0 bg-slate-900/60 z-[60] items-center justify-center p-4"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl"><div class="px-5 py-4 border-b"><h3 id="commentModalTitle" class="text-lg font-bold">Review Comment</h3><p id="commentModalHint" class="text-sm text-slate-500"></p></div><div class="p-5"><textarea id="commentInput" rows="6" class="w-full border border-slate-300 rounded-xl px-3 py-2" placeholder="Enter your review comment..."></textarea><div id="commentRequired" class="hidden text-sm text-red-600 mt-2">Comment is required when returning or rejecting a study.</div></div><div class="px-5 py-4 bg-slate-50 flex justify-end gap-2"><button data-close="commentModal" class="px-4 py-2 rounded-lg bg-slate-200">Cancel</button><button id="commentConfirmBtn" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold">Confirm</button></div></div></div>
 
-    <!-- Message Box Modal -->
-    <div id="messageModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-60 z-[60] items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm overflow-hidden text-center fade-in">
-            <div id="messageIcon" class="pt-6 pb-2">
-                <i class="fas fa-info-circle text-4xl text-blue-500"></i>
-            </div>
-            <h3 id="messageTitle" class="text-xl font-bold text-gray-800 px-6">Information</h3>
-            <p id="messageText" class="text-gray-600 px-6 py-4">This is a message.</p>
-            <div class="bg-gray-50 px-6 py-3 flex justify-center">
-                <button id="closeMessageBtn" class="bg-primary hover:bg-blue-700 text-white font-bold py-2 px-8 rounded-lg transition">OK</button>
-            </div>
-        </div>
-    </div>
+<!-- Users modal -->
+<div id="usersModal" class="modal fixed inset-0 bg-slate-900/60 z-50 items-center justify-center p-4"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"><div class="bg-slate-900 text-white px-5 py-4 flex justify-between items-center"><div><h3 class="text-xl font-bold">User & Role Directory</h3><div class="text-xs text-slate-300">Roles are enforced by Firebase security rules in the supplied V2 rules.</div></div><button data-close="usersModal" class="text-xl"><i class="fa-solid fa-xmark"></i></button></div><div class="p-5 overflow-auto"><form id="userForm" class="grid grid-cols-1 md:grid-cols-5 gap-2 bg-slate-50 p-4 rounded-xl border mb-4"><input id="newUserEmail" type="email" placeholder="Email" required class="px-3 py-2 border rounded-lg"><input id="newUserName" placeholder="Display name" required class="px-3 py-2 border rounded-lg"><select id="newUserRole" class="px-3 py-2 border rounded-lg"><option>Creator</option><option>Viewer</option><option>Reviewer</option><option>Section Head</option><option>Deputy QA Manager</option><option>QA Manager</option><option>Administrator</option></select><input id="newUserDepartment" placeholder="Department" class="px-3 py-2 border rounded-lg"><button class="px-3 py-2 rounded-lg bg-blue-600 text-white font-semibold">Create User</button></form><div id="userMsg" class="hidden mb-3 p-3 rounded-lg text-sm"></div><div class="overflow-x-auto"><table class="min-w-full"><thead class="bg-slate-100"><tr><th class="px-3 py-2 text-left text-xs uppercase">Name</th><th class="px-3 py-2 text-left text-xs uppercase">Email</th><th class="px-3 py-2 text-left text-xs uppercase">Role</th><th class="px-3 py-2 text-left text-xs uppercase">Department</th><th class="px-3 py-2 text-left text-xs uppercase">Active</th></tr></thead><tbody id="userTable" class="divide-y"></tbody></table></div></div></div></div>
 
-    <!-- Confirm Box Modal -->
-    <div id="confirmModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-60 z-[60] items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm overflow-hidden text-center fade-in">
-            <div class="pt-6 pb-2">
-                <i class="fas fa-question-circle text-4xl text-yellow-500"></i>
-            </div>
-            <h3 id="confirmTitle" class="text-xl font-bold text-gray-800 px-6">Confirm Action</h3>
-            <p id="confirmText" class="text-gray-600 px-6 py-4">Are you sure?</p>
-            
-            <div id="rejectReasonDiv" class="hidden px-6 pb-4">
-                <label class="block text-left text-sm font-medium text-gray-700 mb-1">Reason for Rejection *</label>
-                <textarea id="rejectReasonInput" rows="2" class="w-full p-2 border border-gray-300 rounded focus:ring-red-500 focus:border-red-500 text-sm" placeholder="Please specify why this is being rejected..."></textarea>
-            </div>
+<!-- Audit modal -->
+<div id="auditModal" class="modal fixed inset-0 bg-slate-900/60 z-50 items-center justify-center p-4"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col"><div class="bg-slate-900 text-white px-5 py-4 flex justify-between items-center"><div><h3 class="text-xl font-bold">Audit Trail</h3><div class="text-xs text-slate-300">Immutable append-only activity log.</div></div><button data-close="auditModal" class="text-xl"><i class="fa-solid fa-xmark"></i></button></div><div class="p-5 overflow-auto"><div class="overflow-x-auto"><table class="min-w-full"><thead class="bg-slate-100"><tr><th class="px-3 py-2 text-left text-xs uppercase">Time</th><th class="px-3 py-2 text-left text-xs uppercase">User / Role</th><th class="px-3 py-2 text-left text-xs uppercase">Action</th><th class="px-3 py-2 text-left text-xs uppercase">Study</th><th class="px-3 py-2 text-left text-xs uppercase">Details</th></tr></thead><tbody id="auditTable" class="divide-y"></tbody></table></div></div></div></div>
 
-            <div class="bg-gray-50 px-6 py-3 flex justify-center gap-3">
-                <button id="cancelConfirmBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg transition">Cancel</button>
-                <button id="acceptConfirmBtn" class="bg-primary hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">Yes, Proceed</button>
-            </div>
-        </div>
-    </div>
+<div id="toast" class="fixed right-4 bottom-4 hidden z-[100]"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+<script type="module">
+import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, addDoc, query, orderBy, onSnapshot, serverTimestamp, where, getDocs } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js';
 
-        // =========================================================
-        // // 1. EmailJS Credentials (for audit trail emails)
-const EMAILJS_PUBLIC_KEY = "tx8P6mYyi6C6APSXn";
-const EMAILJS_SERVICE_ID = "service_nyq8c6p";       
-const EMAILJS_TEMPLATE_ID = "template_1krwnad";
-        // =========================================================
-        
-      
-        // 2. Firebase Config (for cloud saving across devices)
-        // Paste your Firebase config object here (replace the null)
-        const MY_FIREBASE_CONFIG =  {
-  apiKey: "AIzaSyDEV8rEluViDZiA5nnv7BiIU78rgq5en8A",
-  authDomain: "validapp-db.firebaseapp.com",
-  projectId: "validapp-db",
-  storageBucket: "validapp-db.firebasestorage.app",
-  messagingSenderId: "702664233017",
-  appId: "1:702664233017:web:25fbede2f3c7244cdbfde8",
-  measurementId: "G-7FTDYP0XWS"
-}; 
-        /* Example of how it should look:
-        const MY_FIREBASE_CONFIG = {
-            apiKey: "AIzaSyB...",
-            authDomain: "your-project.firebaseapp.com",
-            projectId: "your-project",
-            storageBucket: "your-project.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef"
-        };
-        */
-        // =========================================================
-
-        // --- CONSTANTS ---
-        const ROLES = {
-           ADMIN: 'Administrator',
-         CREATOR: 'Creator',
-         REVIEWER: 'Reviewer',
-         APPROVER: 'QA Manager',
-         DEPUTY: 'Deputy QA Manager',
-         VIEWER: 'Viewer'
-        };
-
-        const STATUS = {
-    PENDING_REVIEW: 'Pending Review',
-    REVIEWED: 'Reviewed',
-    APPROVED: 'Approved',
-    RETURNED: 'Returned for Revision'
+const firebaseConfig={
+ apiKey:'AIzaSyDEV8rEluViDZiA5nnv7BiIU78rgq5en8A',
+ authDomain:'validapp-db.firebaseapp.com',
+ projectId:'validapp-db',
+ storageBucket:'validapp-db.firebasestorage.app',
+ messagingSenderId:'702664233017',
+ appId:'1:702664233017:web:25fbede2f3c7244cdbfde8',
+ measurementId:'G-7FTDYP0XWS'
 };
-        const canApprove = (user) => {
-       if (!user) return false;
-       return user.role === ROLES.ADMIN || 
-           user.role === ROLES.APPROVER || 
-           user.role === ROLES.DEPUTY;
-        };
-        const CATEGORIES = {
-            PROCESS: 'Process Validation',
-            HOLD_TIME: 'Hold Time Study',
-            CLEANING: 'Cleaning Validation'
-        };
-
-        // --- STATE MANAGEMENT & FIREBASE CLOUD SETUP ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'validapp-default';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : MY_FIREBASE_CONFIG;
-        
-        let app, auth, db;
-        let USERS = [{ username: 'admin', password: 'admin123', role: ROLES.ADMIN }];
-        let records = [];
-        let auditLogs = [];
-        let currentUser = null;
-        let currentTabCategory = CATEGORIES.PROCESS;
-
-        if (firebaseConfig) {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-        } else {
-            console.error("Firebase config not found! Cloud storage disabled.");
-        }
-
-        const getColRef = (colName) => collection(db, 'artifacts', appId, 'public', 'data', colName);
-        const getDocRef = (colName, id) => doc(db, 'artifacts', appId, 'public', 'data', colName, id);
-
-        // --- DOM ELEMENTS ---
-        const ui = {
-            loginSection: document.getElementById('loginSection'),
-            dashboardSection: document.getElementById('dashboardSection'),
-            loginForm: document.getElementById('loginForm'),
-            userInfo: document.getElementById('userInfo'),
-            currentUserDisplay: document.getElementById('currentUserDisplay'),
-            currentUserRole: document.getElementById('currentUserRole'),
-            logoutBtn: document.getElementById('logoutBtn'),
-            
-            dataTableBody: document.getElementById('dataTableBody'),
-            emptyState: document.getElementById('emptyState'),
-            
-            addRecordBtn: document.getElementById('addRecordBtn'),
-            auditTrailBtn: document.getElementById('auditTrailBtn'),
-            userManagementBtn: document.getElementById('userManagementBtn'),
-            
-            searchInput: document.getElementById('searchInput'),
-            filterStage: document.getElementById('filterStage'),
-            filterScale: document.getElementById('filterScale'),
-            filterStatus: document.getElementById('filterStatus'),
-            clearFiltersBtn: document.getElementById('clearFiltersBtn'),
-            tabProcess: document.getElementById('tabProcess'),
-            tabHoldTime: document.getElementById('tabHoldTime'),
-            tabCleaning: document.getElementById('tabCleaning'),
-            
-            recordModal: document.getElementById('recordModal'),
-            recordForm: document.getElementById('recordForm'),
-            auditModal: document.getElementById('auditModal'),
-            userModal: document.getElementById('userModal'),
-            messageModal: document.getElementById('messageModal'),
-            confirmModal: document.getElementById('confirmModal')
-        };
-
-        // --- Helper Functions ---
-        const generateId = () => Math.random().toString(36).substr(2, 9);
-        
-        const getStatusColor = (status) => {
-            switch(status) {
-                case STATUS.APPROVED: return 'bg-green-100 text-green-800 border-green-200';
-                case STATUS.REVIEWED: return 'bg-blue-100 text-blue-800 border-blue-200';
-                case STATUS.PENDING_REVIEW: return 'bg-purple-100 text-purple-800 border-purple-200';
-                case STATUS.REJECTED: return 'bg-red-100 text-red-800 border-red-200';
-                case STATUS.DRAFT:
-                default: return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            }
-        };
-
-        // UI Dialogs
-        const showMessage = (title, text, type = 'info') => {
-            document.getElementById('messageTitle').innerText = title;
-            document.getElementById('messageText').innerText = text;
-            const icon = document.getElementById('messageIcon');
-            icon.innerHTML = type === 'error' ? '<i class="fas fa-times-circle text-4xl text-red-500"></i>' :
-                           type === 'success' ? '<i class="fas fa-check-circle text-4xl text-green-500"></i>' :
-                           '<i class="fas fa-info-circle text-4xl text-blue-500"></i>';
-            ui.messageModal.classList.add('active');
-        };
-
-        document.getElementById('closeMessageBtn').addEventListener('click', () => ui.messageModal.classList.remove('active'));
-
-        let confirmCallback = null;
-        let requiresReason = false;
-        
-        const showConfirm = (title, text, isReject, callback) => {
-            document.getElementById('confirmTitle').innerText = title;
-            document.getElementById('confirmText').innerText = text;
-            
-            requiresReason = isReject;
-            const rejectDiv = document.getElementById('rejectReasonDiv');
-            const rejectInput = document.getElementById('rejectReasonInput');
-            const acceptBtn = document.getElementById('acceptConfirmBtn');
-
-            if (isReject) {
-                rejectDiv.classList.remove('hidden');
-                rejectInput.value = '';
-                acceptBtn.classList.replace('bg-primary', 'bg-red-600');
-                acceptBtn.classList.replace('hover:bg-blue-700', 'hover:bg-red-700');
-                acceptBtn.innerText = 'Confirm Rejection';
-            } else {
-                rejectDiv.classList.add('hidden');
-                acceptBtn.classList.replace('bg-red-600', 'bg-primary');
-                acceptBtn.classList.replace('hover:bg-red-700', 'hover:bg-blue-700');
-                acceptBtn.innerText = 'Yes, Proceed';
-            }
-
-            confirmCallback = callback;
-            ui.confirmModal.classList.add('active');
-        };
-
-        document.getElementById('cancelConfirmBtn').addEventListener('click', () => {
-            ui.confirmModal.classList.remove('active');
-            confirmCallback = null;
-        });
-
-        document.getElementById('acceptConfirmBtn').addEventListener('click', () => {
-            let reasonText = "";
-            if (requiresReason) {
-                reasonText = document.getElementById('rejectReasonInput').value.trim();
-                if (!reasonText) {
-                    alert("Please provide a reason for rejection.");
-                    return;
-                }
-            }
-            ui.confirmModal.classList.remove('active');
-            if(confirmCallback) confirmCallback(reasonText);
-        });
-
-        // --- Core Application Logic ---
-
-        const initializeAppRealtime = async () => {
-            if (!auth) return;
-            try {
-                if (typeof __initial_auth_token !== 'undefined') {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                // Listeners
-                onSnapshot(getColRef('users'), (snapshot) => {
-                    const loadedUsers = [];
-                    snapshot.forEach(doc => loadedUsers.push(doc.data()));
-                    
-                    if (loadedUsers.length === 0) {
-                        const defaultAdmin = { username: 'admin', password: 'admin123', role: ROLES.ADMIN };
-                        setDoc(getDocRef('users', defaultAdmin.username), defaultAdmin);
-                    } else {
-                        USERS = loadedUsers; 
-                    }
-                    if (currentUser && ui.userModal.classList.contains('active')) renderUserList();
-                }, (error) => console.error("Users listener error:", error));
-
-                onSnapshot(getColRef('records'), (snapshot) => {
-                    records = [];
-                    snapshot.forEach(doc => records.push(doc.data()));
-                    records.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    if (currentUser) renderTable();
-                }, (error) => console.error("Records listener error:", error));
-
-                onSnapshot(getColRef('audit'), (snapshot) => {
-                    auditLogs = [];
-                    snapshot.forEach(doc => auditLogs.push(doc.data()));
-                    auditLogs.sort((a, b) => new Date(b.sortTime) - new Date(a.sortTime));
-                    if (currentUser && ui.auditModal.classList.contains('active')) renderAuditTrail();
-                }, (error) => console.error("Audit listener error:", error));
-
-            } catch (err) {
-                console.error("Firebase init failed:", err);
-            }
-        };
-
-        if (app) initializeAppRealtime();
-
-        // -------------------------------------------------------------------
-        // Notification System via EmailJS
-        // -------------------------------------------------------------------
-        const sendSilentNotification = async (action, record, details) => {
-            if (EMAILJS_PUBLIC_KEY === "YOUR_PUBLIC_KEY_HERE") {
-                console.warn("EmailJS credentials not set! Skipping email notification.");
-                return;
-            }
-            
-            // Initialize EmailJS with your Public Key
-            emailjs.init(EMAILJS_PUBLIC_KEY); 
-
-            const templateParams = {
-                action: action,
-                time: new Date().toLocaleString(),
-                product: record.productName,
-                details: details,
-                user: currentUser.username,
-                role: currentUser.role,
-                status: record.status,
-                version: record.version,
-                category: record.studyCategory
-            };
-
-            try {
-                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
-                console.log("Email notification sent successfully via EmailJS!");
-            } catch (err) {
-                console.error("Failed to send email:", err);
-            }
-        };
-
-        // Audit Trail Logger
-        const logAction = async (action, product, details, relatedRecord = null) => {
-            const log = {
-                id: generateId(),
-                timestamp: new Date().toLocaleString(),
-                sortTime: new Date().toISOString(),
-                user: currentUser.username,
-                role: currentUser.role,
-                action: action,
-                product: product,
-                details: details
-            };
-            if(db) {
-                await setDoc(getDocRef('audit', log.id), log);
-            } else {
-                auditLogs.unshift(log);
-            }
-            
-            if(relatedRecord) {
-                sendSilentNotification(action, relatedRecord, details);
-            }
-        };
-
-        // --- Rendering ---
-
-        const renderTable = () => {
-            ui.dataTableBody.innerHTML = '';
-            
-            const query = ui.searchInput.value.toLowerCase();
-            const stageFilter = ui.filterStage.value;
-            const scaleFilter = ui.filterScale.value;
-            const statusFilter = ui.filterStatus.value;
-
-            const filteredRecords = records.filter(r => {
-                const matchCategory = r.studyCategory === currentTabCategory;
-                const matchQuery = r.productName.toLowerCase().includes(query) || (r.productType && r.productType.toLowerCase().includes(query));
-                const matchStage = stageFilter === 'All' || r.stage === stageFilter;
-                const matchScale = scaleFilter === 'All' || r.scale === scaleFilter;
-                const matchStatus = statusFilter === 'All' || r.status === statusFilter;
-                return matchCategory && matchQuery && matchStage && matchScale && matchStatus;
-            });
-
-            if (filteredRecords.length === 0) {
-                ui.emptyState.classList.remove('hidden');
-                ui.dataTableBody.parentElement.classList.add('hidden');
-                return;
-            }
-
-            ui.emptyState.classList.add('hidden');
-            ui.dataTableBody.parentElement.classList.remove('hidden');
-
-            filteredRecords.forEach(record => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-gray-50 transition-colors';
-                
-                let actionButtons = '';
-
-    // PDF attachment button (Visible for all roles)
-    if (record.pdfUrl) {
-        actionButtons += `
-            <a href="${record.pdfUrl}" target="_blank" download="${record.productName}_Protocol.pdf" class="inline-flex items-center px-2 py-0.5 bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 rounded text-xs font-semibold mr-2" title="View PDF">
-                <i class="fas fa-file-pdf text-red-600 mr-1"></i> PDF
-            </a>
-        `;
-    }
-
-    const userRole = currentUser?.role || '';
-
-    // 1. REVIEW ACTION (Section Head & Deputy QA Manager)
-    if ((userRole === 'Section Head' || userRole === 'Deputy QA Manager' || userRole === 'QA Deputy Manager' || userRole === 'Admin') && record.status === STATUS.PENDING_REVIEW) {
-        actionButtons += `
-            <button onclick="processAction('${record.id}', '${STATUS.REVIEWED}')" class="text-blue-600 hover:text-blue-800 font-semibold text-xs mr-2" title="Review Record">
-                <i class="fas fa-check-circle mr-1"></i>Review
-            </button>
-        `;
-    }
-
-    // 2. APPROVE ACTION (QA Manager & Deputy QA Manager)
-    if ((userRole === 'QA Manager' || userRole === 'Deputy QA Manager' || userRole === 'QA Deputy Manager' || userRole === 'Admin') && record.status === STATUS.REVIEWED) {
-        actionButtons += `
-            <button onclick="processAction('${record.id}', '${STATUS.APPROVED}')" class="text-green-600 hover:text-green-800 font-semibold text-xs mr-2" title="Approve Record">
-                <i class="fas fa-thumbs-up mr-1"></i>Approve
-            </button>
-        `;
-    }
-
-    // 3. RETURN TO CREATOR ACTION (Section Head, Deputy QA Manager, QA Manager)
-    if (['Section Head', 'Deputy QA Manager', 'QA Deputy Manager', 'QA Manager', 'Admin'].includes(userRole) && record.status !== STATUS.APPROVED && record.status !== STATUS.RETURNED) {
-        actionButtons += `
-            <button onclick="window.returnRecordToCreator('${record.id}')" class="text-amber-600 hover:text-amber-800 font-semibold text-xs mr-2" title="Return to Creator">
-                <i class="fas fa-undo mr-1"></i>Return
-            </button>
-        `;
-    }
-
-    // 4. FIX & RESUBMIT ACTION (When status is Returned)
-    if (record.status === STATUS.RETURNED && (record.createdBy === currentUser.username || userRole === 'Admin')) {
-        actionButtons += `
-            <button onclick="openEditModal('${record.id}')" class="text-purple-600 hover:text-purple-800 font-semibold text-xs mr-2" title="Edit and Resubmit">
-                <i class="fas fa-edit mr-1"></i>Fix & Resubmit
-            </button>
-        `;
-    }
-
-               tr.innerHTML = `
-    <td class="px-4 py-3 text-sm text-gray-900 font-medium">
-        ${record.productName}
-        <div class="text-xs text-gray-500 font-normal">${record.productType}</div>
-    </td>
-    <td class="px-4 py-3 text-xs text-gray-600">
-        <span class="bg-gray-100 px-2 py-1 rounded border">${record.studyCategory}</span>
-    </td>
-    <td class="px-4 py-3 text-xs text-gray-600">
-        <div>${record.date}</div>
-        <div class="font-semibold text-gray-800 mt-1">${record.stage}</div>
-    </td>
-    <td class="px-4 py-3 text-xs text-gray-600">
-        <div>${record.scale}</div>
-        <div class="mt-1"><span class="bg-blue-100 text-blue-800 px-1 rounded">${record.version}</span></div>
-    </td>
-    <td class="px-4 py-3 text-xs text-gray-500 max-w-[200px] truncate" title="${record.reason}\nNotes: ${record.notes || 'N/A'}">
-        <div class="font-medium text-gray-700 truncate">${record.reason}</div>
-        <div class="text-gray-400 truncate mt-1">${record.notes || 'No extra notes'}</div>
-    </td>
-    <td class="px-4 py-3 whitespace-nowrap">
-        <div class="flex flex-col gap-1">
-            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full border ${getStatusColor(record.status)}">
-                ${record.status}
-            </span>
-            <div class="text-[10px] text-gray-500 leading-tight mt-0.5">
-                ${record.createdBy ? `<div><b>Created:</b> ${record.createdBy}</div>` : ''}
-                ${record.reviewedBy ? `<div class="text-blue-600"><b>Reviewed:</b> ${record.reviewedBy}</div>` : ''}
-                ${record.approvedBy ? `<div class="text-green-600"><b>Approved:</b> ${record.approvedBy}</div>` : ''}
-                ${record.rejectedBy ? `<div class="text-red-600"><b>Rejected:</b> ${record.rejectedBy}</div>` : ''}
-            </div>
-        </div>
-    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-center text-sm font-medium">
-                        <div class="flex justify-center items-center gap-1">${actionButtons}</div>
-                    </td>
-                `;
-                ui.dataTableBody.appendChild(tr);
-            });
-        };
-
-        const renderAuditTrail = () => {
-            const tbody = document.getElementById('auditTableBody');
-            tbody.innerHTML = '';
-            auditLogs.forEach(log => {
-                tbody.insertAdjacentHTML('beforeend', `
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-2 whitespace-nowrap text-xs text-gray-500">${log.timestamp}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-xs">
-                            <div class="font-bold text-gray-800">${log.user}</div>
-                            <div class="text-gray-500">${log.role}</div>
-                        </td>
-                        <td class="px-4 py-2 whitespace-nowrap text-xs">
-                            <span class="bg-gray-200 px-2 py-1 rounded text-gray-800 font-semibold border">${log.action}</span>
-                        </td>
-                        <td class="px-4 py-2 whitespace-nowrap text-xs text-gray-800 font-medium">${log.product}</td>
-                        <td class="px-4 py-2 text-xs text-gray-600 max-w-md">${log.details}</td>
-                    </tr>
-                `);
-            });
-        };
-
-        const renderUserList = () => {
-            const tbody = document.getElementById('userTableBody');
-            tbody.innerHTML = '';
-            USERS.forEach((u, index) => {
-                const isSelf = u.username === currentUser?.username;
-                tbody.insertAdjacentHTML('beforeend', `
-                    <tr>
-                        <td class="px-4 py-2 text-sm font-medium text-gray-800">${u.username} ${isSelf ? '<span class="text-xs text-blue-500">(You)</span>' : ''}</td>
-                        <td class="px-4 py-2 text-sm text-gray-600">${u.role}</td>
-                        <td class="px-4 py-2 text-center">
-                            ${!isSelf ? `<button onclick="deleteUser(${index})" class="text-red-500 hover:text-red-700 text-xs"><i class="fas fa-trash"></i> Delete</button>` : ''}
-                        </td>
-                    </tr>
-                `);
-            });
-        };
-
-        // --- Events and Handlers ---
-
-        ui.loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const userVal = document.getElementById('username').value;
-            const passVal = document.getElementById('password').value;
-            const errorMsg = document.getElementById('loginError');
-
-            const user = USERS.find(u => u.username === userVal && u.password === passVal);
-
-            if (user) {
-                currentUser = user;
-                errorMsg.classList.add('hidden');
-                
-                ui.currentUserDisplay.textContent = user.username;
-                ui.currentUserRole.textContent = user.role;
-                
-                ui.loginSection.classList.add('hidden');
-                ui.dashboardSection.classList.replace('hidden', 'flex');
-                ui.userInfo.classList.replace('hidden', 'flex');
-
-                ui.addRecordBtn.classList.toggle('hidden', user.role !== ROLES.ADMIN);
-                ui.userManagementBtn.classList.toggle('hidden', user.role !== ROLES.ADMIN);
-                ui.auditTrailBtn.classList.toggle('hidden', user.role !== ROLES.ADMIN && user.role !== ROLES.APPROVER);
-
-                switchTab(CATEGORIES.PROCESS); 
-                ui.loginForm.reset();
-            } else {
-                errorMsg.classList.remove('hidden');
-            }
-        });
-
-        ui.logoutBtn.addEventListener('click', () => {
-            currentUser = null;
-            ui.dashboardSection.classList.replace('flex', 'hidden');
-            ui.userInfo.classList.replace('flex', 'hidden');
-            ui.loginSection.classList.remove('hidden');
-        });
-
-        const switchTab = (category) => {
-            currentTabCategory = category;
-            
-            [ui.tabProcess, ui.tabHoldTime, ui.tabCleaning].forEach(tab => {
-                tab.classList.remove('active', 'bg-white', 'text-primary', 'shadow-sm');
-                tab.classList.add('text-gray-600', 'hover:text-gray-900');
-            });
-
-            let activeTab;
-            if(category === CATEGORIES.PROCESS) activeTab = ui.tabProcess;
-            else if (category === CATEGORIES.HOLD_TIME) activeTab = ui.tabHoldTime;
-            else activeTab = ui.tabCleaning;
-
-            activeTab.classList.replace('text-gray-600', 'active');
-            activeTab.classList.replace('hover:text-gray-900', 'bg-white');
-            activeTab.classList.add('text-primary', 'shadow-sm');
-            
-            renderTable();
-        };
-
-        ui.tabProcess.addEventListener('click', () => switchTab(CATEGORIES.PROCESS));
-        ui.tabHoldTime.addEventListener('click', () => switchTab(CATEGORIES.HOLD_TIME));
-        ui.tabCleaning.addEventListener('click', () => switchTab(CATEGORIES.CLEANING));
-
-        const applyFilters = () => renderTable();
-        ui.searchInput.addEventListener('input', applyFilters);
-        ui.filterStage.addEventListener('change', applyFilters);
-        ui.filterScale.addEventListener('change', applyFilters);
-        ui.filterStatus.addEventListener('change', applyFilters);
-        
-        ui.clearFiltersBtn.addEventListener('click', () => {
-            ui.searchInput.value = '';
-            ui.filterStage.value = 'All';
-            ui.filterScale.value = 'All';
-            ui.filterStatus.value = 'All';
-            renderTable();
-        });
-
-        ui.addRecordBtn.addEventListener('click', () => {
-            document.getElementById('modalTitle').textContent = 'Add New Validation Record';
-            ui.recordForm.reset();
-            document.getElementById('recordId').value = '';
-            document.getElementById('studyCategory').value = currentTabCategory; 
-            document.getElementById('studyStatus').value = STATUS.DRAFT; 
-            ui.recordModal.classList.add('active');
-        });
-
-        document.querySelectorAll('.close-modal').forEach(btn => btn.addEventListener('click', () => ui.recordModal.classList.remove('active')));
-        
-        ui.auditTrailBtn.addEventListener('click', () => {
-            renderAuditTrail();
-            ui.auditModal.classList.add('active');
-        });
-        document.querySelectorAll('.close-audit').forEach(btn => btn.addEventListener('click', () => ui.auditModal.classList.remove('active')));
-
-        ui.userManagementBtn.addEventListener('click', () => {
-            renderUserList();
-            ui.userModal.classList.add('active');
-        });
-        document.querySelectorAll('.close-user-modal').forEach(btn => btn.addEventListener('click', () => ui.userModal.classList.remove('active')));
-
-        // --- Form Submissions & Actions ---
-// Return record to creator with mandatory comments
-// Global handler for returning records
-window.returnRecordToCreator = async (recordId) => {
-    const comment = prompt("Enter reason for returning record to creator:");
-    
-    if (comment === null) return; // User canceled prompt
-    if (!comment.trim()) {
-        alert('A return reason comment is mandatory.');
-        return;
-    }
-
-    // Convert both IDs to strings to prevent string/number lookup failures
-    const rec = records.find(r => String(r.id) === String(recordId));
-
-    if (rec) {
-        rec.status = (typeof STATUS !== 'undefined' && STATUS.RETURNED) ? STATUS.RETURNED : 'Returned for Revision';
-        rec.returnComment = comment.trim();
-        rec.returnedBy = currentUser?.username || 'Unknown';
-        rec.returnedAt = new Date().toISOString();
-
-        // Save records using available storage helper
-        if (typeof saveRecords === 'function') {
-            await saveRecords();
-        } else if (typeof saveToLocalStorage === 'function') {
-            saveToLocalStorage();
-        }
-
-        renderTable();
-
-        if (typeof showMessage === 'function') {
-            showMessage('Success', 'Record returned to creator with comment.', 'success');
-        } else {
-            alert('Record returned to creator with comment.');
-        }
-    } else {
-        console.error('Record not found for ID:', recordId);
-    }
-};
-// Global handler to open edit modal for returned records
-window.openEditModal = (recordId) => {
-    try {
-        const record = records.find(r => String(r.id) === String(recordId));
-        if (!record) {
-            alert('Record not found!');
-            return;
-        }
-
-        // 1. Show feedback prompt
-        if (record.returnComment) {
-            alert(`Return Feedback from ${record.returnedBy || 'Reviewer'}:\n\n"${record.returnComment}"`);
-        }
-
-        // 2. Trigger native modal trigger via "+ Add Record" button
-        const addBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Add Record'));
-        if (addBtn) {
-            addBtn.click();
-        }
-
-        // Unhide all parent containers of the record form
-        const formEl = document.getElementById('recordForm') || (typeof ui !== 'undefined' && ui?.recordForm);
-        if (formEl) {
-            let current = formEl;
-            while (current && current !== document.body) {
-                current.classList.remove('hidden');
-                if (window.getComputedStyle(current).display === 'none') {
-                    current.style.display = 'flex';
-                }
-                current = current.parentElement;
-            }
-        }
-
-        // 3. Populate form fields with returned record data
-        const setVal = (id, val) => {
-            const el = document.getElementById(id);
-            if (el) el.value = val !== undefined && val !== null ? val : '';
-        };
-
-        setVal('recordId', record.id);
-        setVal('productName', record.productName);
-        setVal('studyCategory', record.studyCategory);
-        setVal('productType', record.productType);
-        setVal('studyDate', record.date || record.studyDate);
-        setVal('stage', record.stage);
-        setVal('studyStatus', record.status);
-        setVal('version', record.version);
-        setVal('scale', record.scale);
-        setVal('reason', record.reason);
-        setVal('notes', record.notes);
-
-    } catch (err) {
-        console.error('Error in openEditModal:', err);
-        alert('Error opening edit form: ' + err.message);
-    }
-};
-        ui.recordForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const id = document.getElementById('recordId').value;
-            const data = {
-                productName: document.getElementById('productName').value,
-                studyCategory: document.getElementById('studyCategory').value,
-                productType: document.getElementById('productType').value,
-                date: document.getElementById('studyDate').value,
-                stage: document.getElementById('stage').value,
-               status: (records.find(r => String(r.id) === String(id))?.status === STATUS.RETURNED) ? STATUS.PENDING_REVIEW : document.getElementById('studyStatus').value,
-                version: document.getElementById('version').value,
-                scale: document.getElementById('scale').value,
-                reason: document.getElementById('reason').value,
-              notes: document.getElementById('notes').value,
-createdBy: id ? (records.find(r => r.id === id)?.createdBy || currentUser.username) : currentUser.username
-};
-          
-
-            if (id) {
-                // Edit
-                const record = records.find(r => r.id === id);
-                if (record) {
-                    const updatedRecord = { ...record, ...data };
-                    if(db) await setDoc(getDocRef('records', id), updatedRecord);
-                    logAction('Edited Data', data.productName, `Updated Stage: ${data.stage}, Ver: ${data.version}, Status: ${data.status}.`, updatedRecord);
-                    showMessage('Success', 'Record updated successfully.', 'success');
-                }
-            } else {
-                // Add
-                const newRecord = {
-                    id: generateId(),
-                    ...data,
-                    createdBy: currentUser.username,
-                    createdAt: new Date().toISOString()
-                };
-                if (db) {
-                    await setDoc(getDocRef('records', newRecord.id), newRecord);
-                } else {
-                    records.unshift(newRecord);
-                }
-                
-                logAction('Added Record', data.productName, `Added as ${data.stage}, Ver: ${data.version}.`, newRecord);
-                showMessage('Success', 'New record added successfully.', 'success');
-            }
-
-            ui.recordModal.classList.remove('active');
-            if(!db) renderTable(); 
-        });
-
-      window.processAction = (id, newStatus, isReject = false) => {
-    const record = records.find(r => r.id === id);
-    if (!record) return;
-
-    const activeUser = currentUser?.username || currentUser?.name || 'Unknown User';
-    const targetStatus = newStatus || (isReject ? 'Rejected' : 'Reviewed');
-
-    let actionName = 'Action';
-    if (isReject) actionName = 'Rejected';
-    else if (targetStatus === 'Reviewed' || targetStatus === STATUS?.REVIEWED) actionName = 'Reviewed';
-    else if (targetStatus === 'Approved' || targetStatus === STATUS?.APPROVED) actionName = 'Approved';
-
-    const confirmMsg = isReject 
-        ? `Are you sure you want to REJECT ${record.productName}?`
-        : `Are you sure you want to mark ${record.productName} as ${targetStatus}?`;
-
-    const handleUpdate = async (reason = '') => {
-        try {
-            const updates = { 
-                status: targetStatus,
-                updatedAt: new Date().toISOString() 
-            };
-
-            if (isReject) {
-                updates.rejectedBy = activeUser;
-                if (reason) updates.rejectionReason = reason;
-            } else if (targetStatus === 'Reviewed' || targetStatus === STATUS?.REVIEWED) {
-                updates.reviewedBy = activeUser;
-            } else if (targetStatus === 'Approved' || targetStatus === STATUS?.APPROVED) {
-                updates.approvedBy = activeUser;
-            }
-
-            // Update UI state immediately
-            Object.assign(record, updates);
-            if (typeof renderTable === 'function') renderTable();
-
-            // Persist to Firebase if connected
-            if (typeof db !== 'undefined' && db && typeof updateDoc === 'function' && typeof getDocRef === 'function') {
-                await updateDoc(getDocRef('records', id), updates);
-            }
-
-            if (typeof logAction === 'function') logAction(`${actionName} Record`, record.productName, `Status: ${targetStatus}`, record);
-            if (typeof showMessage === 'function') showMessage('Success', `Record updated to ${targetStatus}.`, 'success');
-
-        } catch (err) {
-            console.error('Error during action execution:', err);
-            alert('Action failed: ' + (err.message || err));
-        }
-    };
-
-    if (typeof showConfirm === 'function') {
-        showConfirm(`Confirm ${actionName}`, confirmMsg, isReject, (reason) => handleUpdate(reason));
-    } else {
-        if (confirm(confirmMsg)) handleUpdate();
-    }
-};
-        window.editRecord = (id) => {
-            const record = records.find(r => r.id === id);
-            if (!record) return;
-
-            document.getElementById('modalTitle').textContent = 'Edit Validation Record';
-            document.getElementById('recordId').value = record.id;
-            document.getElementById('productName').value = record.productName;
-            document.getElementById('studyCategory').value = record.studyCategory;
-            document.getElementById('productType').value = record.productType;
-            document.getElementById('studyDate').value = record.date;
-            document.getElementById('stage').value = record.stage;
-            document.getElementById('studyStatus').value = record.status;
-            document.getElementById('version').value = record.version;
-            document.getElementById('scale').value = record.scale;
-            document.getElementById('reason').value = record.reason;
-            document.getElementById('notes').value = record.notes || '';
-
-            ui.recordModal.classList.add('active');
-        };
-
-        document.getElementById('userForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const newU = document.getElementById('newUsername').value;
-            const newP = document.getElementById('newPassword').value;
-            const newR = document.getElementById('newRole').value;
-
-            if (USERS.some(u => u.username === newU)) {
-                showMessage('Error', 'Username already exists.', 'error');
-                return;
-            }
-
-            const newUser = { username: newU, password: newP, role: newR };
-            if (db) {
-                await setDoc(getDocRef('users', newU), newUser);
-            } else {
-                USERS.push(newUser);
-                renderUserList();
-            }
-            document.getElementById('userForm').reset();
-            showMessage('Success', 'User added successfully.', 'success');
-        });
-
-        window.deleteUser = (index) => {
-            const userToDelete = USERS[index];
-            showConfirm('Delete User', `Are you sure you want to delete ${userToDelete.username}?`, false, async () => {
-                if (db) {
-                    await deleteDoc(getDocRef('users', userToDelete.username));
-                } else {
-                    USERS.splice(index, 1);
-                    renderUserList();
-                }
-                showMessage('Success', 'User deleted.', 'success');
-            });
-        };
-        window.toggleDelegation = function() {
-    let currentState = localStorage.getItem('isDelegationActive') === 'true';
-    let newState = !currentState;
-    
-    localStorage.setItem('isDelegationActive', newState);
-    if (typeof isDelegationActive !== 'undefined') {
-        isDelegationActive = newState;
-    }
-
-    window.updateDelegationUI();
-
-    if (typeof renderTable === 'function') {
-        renderTable();
-    }
-};
-
-window.updateDelegationUI = function() {
-    const btn = document.getElementById('delegationBtn');
-    if (!btn) return;
-
-    const isActive = localStorage.getItem('isDelegationActive') === 'true';
-    if (isActive) {
-        btn.textContent = 'ON';
-        btn.className = 'px-3 py-1 text-xs font-bold rounded text-white bg-green-600 hover:bg-green-700 cursor-pointer';
-    } else {
-        btn.textContent = 'OFF';
-        btn.className = 'px-3 py-1 text-xs font-bold rounded text-white bg-red-600 hover:bg-red-700 cursor-pointer';
-    }
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-    window.updateDelegationUI();
-});
-    </script>
-</body>
-</html>
+const app=getApps().length?getApps()[0]:initializeApp(firebaseConfig);
+const auth=getAuth(app), db=getFirestore(app), storage=getStorage(app);
+const PATH='artifacts/validapp-default/public/data';
+const roles={ADMIN:'Administrator',CREATOR:'Creator',VIEWER:'Viewer',REVIEWER:'Reviewer',SECTION:'Section Head',DEPUTY:'Deputy QA Manager',QA:'QA Manager'};
+const status={DRAFT:'Draft',PENDING_SECTION:'Pending Section Head',PENDING_REVIEWER:'Pending Reviewer',PENDING_DEPUTY:'Pending Deputy QA',PENDING_QA:'Pending QA Manager',RETURNED:'Returned for Revision',APPROVED:'Approved',REJECTED:'Rejected'};
+const ALLOWED_FILES=['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+const MAX_FILE_SIZE=25*1024*1024;
+let currentUser=null, currentProfile=null, studies=[], users=[], auditLogs=[], selectedStudy=null, pendingAction=null, pendingFiles=[];
+const $=id=>document.getElementById(id);
+const col=name=>collection(db,PATH,name); const refDoc=(name,id)=>doc(db,PATH,name,id);
+const nowIso=()=>new Date().toISOString();
+const esc=v=>String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\':'\\\\','"':'&quot;'}[m]||m));
+function toast(msg,type='ok'){const t=$('toast');t.className=`fixed right-4 bottom-4 z-[100] px-4 py-3 rounded-xl shadow-xl text-sm font-semibold ${type==='err'?'bg-red-600':'bg-slate-900'} text-white`;t.textContent=msg;t.classList.remove('hidden');setTimeout(()=>t.classList.add('hidden'),3000)}
+function pill(s){let c='bg-slate-100 text-slate-700 border-slate-200';if(s===status.APPROVED)c='bg-emerald-50 text-emerald-700 border-emerald-200';else if(s===status.RETURNED)c='bg-amber-50 text-amber-800 border-amber-200';else if(s===status.REJECTED)c='bg-red-50 text-red-700 border-red-200';else if(s.includes('Pending'))c='bg-blue-50 text-blue-700 border-blue-200';return `<span class="pill ${c}">${esc(s)}</span>`}
+function canCreate(){return [roles.CREATOR,roles.ADMIN].includes(currentProfile?.role)}
+function canUpload(){return [roles.CREATOR,roles.ADMIN].includes(currentProfile?.role)}
+function isApprovalRole(){return [roles.REVIEWER,roles.SECTION,roles.DEPUTY,roles.QA,roles.ADMIN].includes(currentProfile?.role)}
+function visibleStudies(){if(!currentProfile)return[];if(currentProfile.role===roles.CREATOR)return studies.filter(s=>s.createdByUid===currentUser.uid || s.createdBy===currentProfile.displayName || s.createdBy===currentProfile.email);return studies}
+function stageForNext(st){switch(st){case status.DRAFT:case status.RETURNED:return status.PENDING_SECTION;case status.PENDING_SECTION:return status.PENDING_REVIEWER;case status.PENDING_REVIEWER:return status.PENDING_DEPUTY;case status.PENDING_DEPUTY:return status.PENDING_QA;default:return status.APPROVED}}
+function currentStageMatches(st){const r=currentProfile?.role;if(r===roles.SECTION)return st===status.PENDING_SECTION;if(r===roles.REVIEWER)return st===status.PENDING_REVIEWER;if(r===roles.DEPUTY)return st===status.PENDING_DEPUTY;if(r===roles.QA)return st===status.PENDING_QA;if(r===roles.ADMIN)return ![status.APPROVED,status.REJECTED].includes(st);return false}
+async function logAction(action, study, details=''){if(!currentUser||!currentProfile)return;try{await addDoc(col('audit'),{timestamp:serverTimestamp(),sortTime:Date.now(),userUid:currentUser.uid,user:currentProfile.displayName||currentProfile.email,email:currentProfile.email,role:currentProfile.role,department:currentProfile.department||'',action,studyId:study?.id||'',product:study?.productName||'',details:String(details).slice(0,2000)});}catch(e){console.warn('Audit log failed',e)}}
+
+function openModal(id){$(id).classList.add('active')}function closeModal(id){$(id).classList.remove('active')}
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
+
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginError').classList.add('hidden');try{await signInWithEmailAndPassword(auth,$('loginEmail').value.trim(),$('loginPassword').value); }catch(err){$('loginError').textContent=err.message.replace('Firebase: ','');$('loginError').classList.remove('hidden')}});
+$('logoutBtn').addEventListener('click',async()=>{await logAction('LOGOUT',null,'User signed out');await signOut(auth)});
+$('searchInput').addEventListener('input',renderStudies);$('categoryFilter').addEventListener('change',renderStudies);$('statusFilter').addEventListener('change',renderStudies);$('clearFilterBtn').addEventListener('click',()=>{$('searchInput').value='';$('categoryFilter').value='All';$('statusFilter').value='All';renderStudies()});
+$('newStudyBtn').addEventListener('click',()=>openStudyForm());
+$('auditBtn').addEventListener('click',()=>{renderAudit();openModal('auditModal');logAction('VIEW_AUDIT_TRAIL',null,'Opened audit trail')});
+$('usersBtn').addEventListener('click',()=>{renderUsers();openModal('usersModal');logAction('VIEW_USER_DIRECTORY',null,'Opened user directory')});
+
+function resetStudyForm(){ $('studyForm').reset();$('studyId').value='';$('studyDate').value=new Date().toISOString().slice(0,10);$('version').value='v1.0';pendingFiles=[];$('documentList').innerHTML='';$('reviewHistory').innerHTML='<div class="text-sm text-slate-400">No review comments yet.</div>';$('returnBanner').classList.add('hidden'); }
+async function openStudyForm(id=null){resetStudyForm();if(id){const s=studies.find(x=>x.id===id);if(!s)return;selectedStudy=s;$('studyModalTitle').textContent='Study Details';$('studyModalSub').textContent=`${s.productName} • ${s.id}`;fillStudy(s);await loadDocuments(s.id);await loadReviews(s.id);await logAction('VIEW_STUDY',s,'Opened study details');}else{$('studyModalTitle').textContent='Create Study';$('studyModalSub').textContent='Creator only';}
+ const editable=!id?canCreate():(canCreate() && selectedStudy && selectedStudy.createdByUid===currentUser.uid && ![status.APPROVED,status.REJECTED].includes(selectedStudy.status));
+ setEditable(editable);updateActionButtons(id?selectedStudy:null,editable);openModal('studyModal');}
+function fillStudy(s){$('studyId').value=s.id;$('productName').value=s.productName||'';$('studyCategory').value=s.studyCategory||'Process Validation';$('productType').value=s.productType||'Finished Product';$('studyDate').value=s.date||'';$('stage').value=s.stage||'Raw';$('version').value=s.version||'v1.0';$('scale').value=s.scale||'Lab Scale';$('reviewerDepartment').value=s.reviewerDepartment||'';$('reason').value=s.reason||'';$('notes').value=s.notes||'';}
+function setEditable(editable){['productName','studyCategory','productType','studyDate','stage','version','scale','reviewerDepartment','reason','notes'].forEach(id=>$(id).disabled=!editable);$('uploadLabel').classList.toggle('hidden',!editable||!canUpload());$('dropzone').classList.toggle('hidden',!editable||!canUpload());}
+function updateActionButtons(s,editable){const has=s!==null;[['saveDraftBtn',editable],['submitStudyBtn',editable],['reviewAcceptBtn',has&&currentStageMatches(s.status)&&currentProfile.role!==roles.SECTION?true:has&&currentStageMatches(s.status)],['returnBtn',has&&currentStageMatches(s.status)],['approveBtn',has&&currentProfile.role===roles.QA&&s.status===status.PENDING_QA],['rejectBtn',has&&currentProfile.role===roles.QA&&s.status===status.PENDING_QA]].forEach(([id,show])=>$(id).classList.toggle('hidden',!show));
+ // Section Head and Reviewer/Deputy use Complete Review; QA uses Approve.
+ if(has && [roles.SECTION,roles.REVIEWER,roles.DEPUTY].includes(currentProfile.role) && currentStageMatches(s.status)) $('reviewAcceptBtn').classList.remove('hidden');
+ if(has && [roles.QA].includes(currentProfile.role) && s.status===status.PENDING_QA){$('reviewAcceptBtn').classList.add('hidden');$('approveBtn').classList.remove('hidden');$('rejectBtn').classList.remove('hidden');}
+ if(has && currentProfile.role===roles.ADMIN && s.status!==status.APPROVED){$('reviewAcceptBtn').classList.remove('hidden');$('returnBtn').classList.remove('hidden');}
+}
+
+$('saveDraftBtn').addEventListener('click',()=>saveStudy(status.DRAFT));$('submitStudyBtn').addEventListener('click',()=>saveStudy(stageForNext(status.DRAFT)));
+$('studyForm').addEventListener('submit',e=>{e.preventDefault();saveStudy(stageForNext(status.DRAFT))});
+async function saveStudy(targetStatus=status.DRAFT){if(!canCreate()){toast('Only Creator can create or edit studies','err');return}const id=$('studyId').value.trim();const existing=id?studies.find(s=>s.id===id):null;if(existing&&!((existing.createdByUid===currentUser.uid)||currentProfile.role===roles.ADMIN)){toast('You can only edit your own studies','err');return}
+ const base={productName:$('productName').value.trim(),studyCategory:$('studyCategory').value,productType:$('productType').value,date:$('studyDate').value,stage:$('stage').value,version:$('version').value.trim(),scale:$('scale').value,reviewerDepartment:$('reviewerDepartment').value.trim(),reason:$('reason').value.trim(),notes:$('notes').value.trim()};if(!base.productName||!base.reason){toast('Complete required fields','err');return}
+ try{let study;if(existing){study={...existing,...base,status:targetStatus,updatedAt:nowIso()};await setDoc(refDoc('records',id),study);await logAction(targetStatus===status.DRAFT?'SAVE_DRAFT':'RESUBMIT_STUDY',study,`Status: ${existing.status} → ${targetStatus}`);}else{const newId=crypto.randomUUID();study={...base,id:newId,status:targetStatus,createdByUid:currentUser.uid,createdBy:currentProfile.displayName||currentProfile.email,createdAt:nowIso(),updatedAt:nowIso()};await setDoc(refDoc('records',newId),study);await logAction('CREATE_STUDY',study,`Created with status ${targetStatus}`)}
+ await uploadPendingFiles(study);await logAction(targetStatus===status.DRAFT?'SAVE_DRAFT':'SUBMIT_STUDY',study,`Files pending: ${pendingFiles.length}`);pendingFiles=[];closeModal('studyModal');toast(targetStatus===status.DRAFT?'Draft saved':'Study submitted for Section Head review');}
+ catch(e){console.error(e);toast(e.message||'Could not save study','err')}}
+
+$('fileInput').addEventListener('change',e=>queueFiles([...e.target.files]));['dragenter','dragover'].forEach(ev=>$('dropzone').addEventListener(ev,e=>{e.preventDefault();$('dropzone').classList.add('drag')}));['dragleave','drop'].forEach(ev=>$('dropzone').addEventListener(ev,e=>{e.preventDefault();$('dropzone').classList.remove('drag')}));$('dropzone').addEventListener('drop',e=>queueFiles([...e.dataTransfer.files]));
+function queueFiles(files){for(const f of files){if(!ALLOWED_FILES.includes(f.type)){toast(`Unsupported file: ${f.name}`,'err');continue}if(f.size>MAX_FILE_SIZE){toast(`File too large: ${f.name}`,'err');continue}pendingFiles.push(f)}renderDocumentList();}
+function renderDocumentList(docs=[]){const merged=[...docs.map(d=>({existing:true,...d})),...pendingFiles.map(f=>({pending:true,name:f.name,size:f.size,type:f.type}))];$('documentList').innerHTML=merged.length?merged.map(d=>`<div class="flex items-center justify-between gap-3 p-3 rounded-lg border border-slate-200"><div class="min-w-0"><div class="font-semibold text-sm truncate"><i class="fa-regular fa-file-lines mr-2 text-slate-500"></i>${esc(d.name)}</div><div class="text-xs text-slate-500">${esc(d.type||'')} • ${formatBytes(d.size||0)} ${d.version?`• ${esc(d.version)}`:''}</div></div><div>${d.url?`<a href="${esc(d.url)}" target="_blank" class="text-blue-600 text-sm font-semibold mr-2" onclick="window.__logDownload('${esc(d.studyId||$('studyId').value)}','${esc(d.name)}')">View</a>`:''}${d.pending?'<span class="text-xs text-emerald-600 font-semibold">Ready to upload</span>':''}</div></div>`).join(''):'<div class="text-sm text-slate-400">No documents uploaded.</div>'}
+window.__logDownload=async(id,name)=>{const s=studies.find(x=>x.id===id);await logAction('DOWNLOAD_DOCUMENT',s,`Downloaded ${name}`)};
+function formatBytes(n){if(!n)return '0 B';const u=['B','KB','MB','GB'];let i=0,v=n;while(v>=1024&&i<u.length-1){v/=1024;i++}return `${v.toFixed(i?1:0)} ${u[i]}`}
+async function uploadPendingFiles(study){if(!pendingFiles.length)return;for(const file of pendingFiles){const path=`studies/${study.id}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;const r=ref(storage,path);await new Promise((resolve,reject)=>{const task=uploadBytesResumable(r,file,{contentType:file.type});task.on('state_changed',()=>{},reject,async()=>{try{const url=await getDownloadURL(task.snapshot.ref);const meta={studyId:study.id,name:file.name,size:file.size,type:file.type,storagePath:path,url,uploadedByUid:currentUser.uid,uploadedBy:currentProfile.displayName||currentProfile.email,uploadedAt:nowIso(),version:study.version};await addDoc(col('documents'),meta);await logAction('UPLOAD_DOCUMENT',study,`Uploaded ${file.name} (${formatBytes(file.size)})`);resolve()}catch(e){reject(e)}})});}}
+
+async function loadDocuments(studyId){try{const snap=await getDocs(query(col('documents'),where('studyId','==',studyId)));renderDocumentList(snap.docs.map(d=>({id:d.id,...d.data()})));}catch(e){console.warn(e);renderDocumentList([])}}
+async function loadReviews(studyId){try{const snap=await getDocs(query(col('reviews'),where('studyId','==',studyId),orderBy('createdAt','desc')));const arr=snap.docs.map(d=>({id:d.id,...d.data()}));$('reviewHistory').innerHTML=arr.length?arr.map(r=>`<div class="p-3 rounded-lg border ${r.type==='RETURN'?'border-amber-200 bg-amber-50':r.type==='REJECT'?'border-red-200 bg-red-50':'border-slate-200 bg-slate-50'}"><div class="flex justify-between gap-3"><div class="font-semibold text-sm">${esc(r.user)} <span class="text-xs text-slate-500">(${esc(r.role)})</span></div><div class="text-xs text-slate-500">${new Date(r.clientTime||Date.now()).toLocaleString()}</div></div><div class="mt-1 text-sm whitespace-pre-wrap">${esc(r.comment)}</div><div class="mt-1 text-[11px] font-bold uppercase text-slate-500">${esc(r.type)}</div></div>`).join(''):'<div class="text-sm text-slate-400">No review comments yet.</div>'}catch(e){$('reviewHistory').innerHTML='<div class="text-sm text-red-500">Could not load review history.</div>'}}
+
+function openComment(mode,study){pendingAction={mode,study};$('commentInput').value='';$('commentModalTitle').textContent=mode==='RETURN'?'Return Study to Creator':mode==='REJECT'?'Reject Study':'Review Comment';$('commentModalHint').textContent=mode==='RETURN'?'A comment is required. The creator will see it and can revise/resubmit.':mode==='REJECT'?'A rejection reason is required.':'You may add an observation or review comment.';$('commentRequired').classList.add('hidden');openModal('commentModal')}
+$('commentConfirmBtn').addEventListener('click',async()=>{if(!pendingAction)return;const c=$('commentInput').value.trim();const required=['RETURN','REJECT'].includes(pendingAction.mode);if(required&&!c){$('commentRequired').classList.remove('hidden');return}try{const s=pendingAction.study;const mode=pendingAction.mode;if(mode==='RETURN'){await transition(s,status.RETURNED);await addReview(s,'RETURN',c||'Returned for revision');}else if(mode==='REJECT'){await transition(s,status.REJECTED);await addReview(s,'REJECT',c); }else{await addReview(s,'COMMENT',c||'Review completed');await transition(s,stageForNext(s.status));}closeModal('commentModal');closeModal('studyModal');pendingAction=null;toast('Action completed');}catch(e){toast(e.message||'Action failed','err')}});
+async function addReview(study,type,comment){const review={studyId:study.id,type,comment,userUid:currentUser.uid,user:currentProfile.displayName||currentProfile.email,role:currentProfile.role,department:currentProfile.department||'',clientTime:nowIso(),createdAt:serverTimestamp()};await addDoc(col('reviews'),review);await logAction(type==='COMMENT'?'ADD_REVIEW_COMMENT':type==='RETURN'?'RETURN_STUDY':'REJECT_STUDY',study,comment||type)}
+async function transition(study,target){const before=study.status;const updates={status:target,updatedAt:nowIso()};if(target===status.RETURNED){updates.returnedBy=currentProfile.displayName||currentProfile.email;updates.returnedByRole=currentProfile.role;updates.returnedAt=nowIso()}if(target===status.APPROVED){updates.approvedBy=currentProfile.displayName||currentProfile.email;updates.approvedByRole=currentProfile.role;updates.approvedAt=nowIso()}if(target===status.REJECTED){updates.rejectedBy=currentProfile.displayName||currentProfile.email;updates.rejectedAt=nowIso()}await updateDoc(refDoc('records',study.id),updates);await logAction('STATUS_CHANGE',study,`${before} → ${target}`)}
+$('reviewAcceptBtn').addEventListener('click',()=>{const s=selectedStudy; if(!s)return;if([roles.SECTION,roles.REVIEWER,roles.DEPUTY].includes(currentProfile.role))openComment('COMMENT',s);else transition(s,stageForNext(s.status)).then(()=>{closeModal('studyModal');toast('Workflow advanced')}).catch(e=>toast(e.message,'err'))});
+$('returnBtn').addEventListener('click',()=>selectedStudy&&openComment('RETURN',selectedStudy));$('rejectBtn').addEventListener('click',()=>selectedStudy&&openComment('REJECT',selectedStudy));
+$('approveBtn').addEventListener('click',async()=>{if(!selectedStudy)return;try{await transition(selectedStudy,status.APPROVED);await addReview(selectedStudy,'COMMENT','Final QA approval');closeModal('studyModal');toast('Study approved')}catch(e){toast(e.message,'err')}});
+
+function renderStudies(){const q=$('searchInput').value.toLowerCase();const c=$('categoryFilter').value,s=$('statusFilter').value;const data=visibleStudies().filter(x=>(!q||`${x.productName} ${x.productType} ${x.id}`.toLowerCase().includes(q))&&(c==='All'||x.studyCategory===c)&&(s==='All'||x.status===s)).sort((a,b)=>String(b.updatedAt||b.createdAt).localeCompare(String(a.updatedAt||a.createdAt)));$('studyTable').innerHTML=data.map(x=>{let actions=`<button class="text-blue-600 font-semibold text-sm" onclick="window.__openStudy('${x.id}')">Open</button>`;if(canCreate()&&x.createdByUid===currentUser.uid&&!['Approved','Rejected'].includes(x.status))actions+=`<button class="text-slate-700 font-semibold text-sm ml-3" onclick="window.__editStudy('${x.id}')">Edit</button>`;return `<tr class="hover:bg-slate-50"><td class="px-4 py-4"><div class="font-semibold">${esc(x.productName)}</div><div class="text-xs text-slate-500">${esc(x.productType)} • ${esc(x.version||'')}</div></td><td class="px-4 py-4 text-sm">${esc(x.studyCategory)}</td><td class="px-4 py-4 text-sm">${esc(x.createdBy||'')}</td><td class="px-4 py-4">${pill(x.status)}</td><td class="px-4 py-4 text-xs text-slate-500">${x.updatedAt?new Date(x.updatedAt).toLocaleString():''}</td><td class="px-4 py-4 text-right whitespace-nowrap">${actions}</td></tr>`}).join('');$('emptyState').classList.toggle('hidden',data.length>0)}
+window.__openStudy=id=>openStudyForm(id);window.__editStudy=id=>openStudyForm(id);
+
+function renderAudit(){const arr=[...auditLogs].sort((a,b)=>(b.sortTime||0)-(a.sortTime||0));$('auditTable').innerHTML=arr.map(a=>`<tr><td class="px-3 py-2 text-xs whitespace-nowrap">${a.timestamp?.seconds?new Date(a.timestamp.seconds*1000).toLocaleString():a.timestampText||''}</td><td class="px-3 py-2 text-xs"><div class="font-semibold">${esc(a.user)}</div><div class="text-slate-500">${esc(a.role)}</div></td><td class="px-3 py-2 text-xs"><span class="px-2 py-1 rounded bg-slate-100 font-semibold">${esc(a.action)}</span></td><td class="px-3 py-2 text-xs">${esc(a.product||a.studyId||'')}</td><td class="px-3 py-2 text-xs text-slate-600 max-w-xl">${esc(a.details)}</td></tr>`).join('')}
+function renderUsers(){$('userTable').innerHTML=users.map(u=>`<tr><td class="px-3 py-2 text-sm font-semibold">${esc(u.displayName||'')}</td><td class="px-3 py-2 text-sm">${esc(u.email||'')}</td><td class="px-3 py-2 text-sm">${pill(u.role)}</td><td class="px-3 py-2 text-sm">${esc(u.department||'')}</td><td class="px-3 py-2 text-sm">${u.active!==false?'Yes':'No'}</td></tr>`).join('')}
+$('userForm').addEventListener('submit',async e=>{e.preventDefault();if(currentProfile.role!==roles.ADMIN){toast('Administrator only','err');return}const email=$('newUserEmail').value.trim(),name=$('newUserName').value.trim(),role=$('newUserRole').value,dept=$('newUserDepartment').value.trim();const tmp=initializeApp(firebaseConfig,'secondary-'+Date.now());const a=getAuth(tmp);try{const cred=await createUserWithEmailAndPassword(a,email,crypto.randomUUID().slice(0,12)+'Aa1!');const profile={uid:cred.user.uid,email,displayName:name,role,department:dept,active:true,createdAt:nowIso()};await setDoc(refDoc('users',cred.user.uid),profile);await sendPasswordResetEmail(a,email);await signOut(a);$('userForm').reset();toast(`User created. A password-reset email was sent to ${email}.`);await logAction('CREATE_USER',null,`${email} assigned ${role}`);}catch(err){toast(err.message||'Could not create user','err')}});
+
+function subscribeData(){onSnapshot(query(col('records'),orderBy('updatedAt','desc')),snap=>{studies=snap.docs.map(d=>({id:d.id,...d.data()}));renderStudies()},e=>console.error('records',e));onSnapshot(col('users'),snap=>{users=snap.docs.map(d=>({id:d.id,...d.data()}));if(currentProfile?.role===roles.ADMIN)renderUsers()},e=>console.error('users',e));onSnapshot(query(col('audit'),orderBy('sortTime','desc')),snap=>{auditLogs=snap.docs.map(d=>({id:d.id,...d.data()}));if(!$('auditModal').classList.contains('hidden'))renderAudit()},e=>console.error('audit',e));}
+
+async function hydrateProfile(user){const snap=await getDoc(refDoc('users',user.uid));if(!snap.exists())throw new Error('Your account exists in Firebase Authentication but no ValidApp role profile was found. Ask an Administrator to create/assign your user profile.');const p={uid:user.uid,...snap.data()};if(p.active===false)throw new Error('Your ValidApp account is inactive.');return p}
+onAuthStateChanged(auth,async user=>{if(!user){currentUser=null;currentProfile=null;$('loginView').classList.remove('hidden');$('appView').classList.add('hidden');$('sessionArea').classList.add('hidden');return}try{currentUser=user;currentProfile=await hydrateProfile(user);$('loginView').classList.add('hidden');$('appView').classList.remove('hidden');$('sessionArea').classList.remove('hidden');$('sessionArea').classList.add('flex');$('userName').textContent=currentProfile.displayName||currentProfile.email;$('userRole').textContent=`${currentProfile.role}${currentProfile.department?` • ${currentProfile.department}`:''}`;$('newStudyBtn').classList.toggle('hidden',!canCreate());$('auditBtn').classList.toggle('hidden',!isApprovalRole()&&!canCreate());$('usersBtn').classList.toggle('hidden',currentProfile.role!==roles.ADMIN);$('scopeText').textContent=currentProfile.role===roles.CREATOR?'You see studies you created. Creator can upload and replace documents.':'You see studies allowed by your workflow role.';subscribeData();await logAction('LOGIN',null,`Signed in as ${currentProfile.role}`);renderStudies();}catch(e){await signOut(auth);$('loginError').textContent=e.message;$('loginError').classList.remove('hidden')}});
+
+// Keep selected study synchronized with live data when modal is open.
+setInterval(()=>{if(selectedStudy){const fresh=studies.find(s=>s.id===selectedStudy.id);if(fresh&&fresh.updatedAt!==selectedStudy.updatedAt){selectedStudy=fresh;updateActionButtons(selectedStudy,false)} }},1500);
+</script>
+</body></html>
