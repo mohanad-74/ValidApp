@@ -196,7 +196,7 @@
         </div>
     </main>
 
-    <div id="recordModal" style="display: none;" class="hidden modal fixed inset-0 bg-gray-900 bg-opacity-60 z-50 flex items-center justify-center p-4">
+   <div id="recordModal" style="display: none;" class="hidden modal fixed inset-0 bg-gray-900 bg-opacity-60 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh]">
             <div class="bg-primary text-white p-4 flex justify-between items-center flex-shrink-0">
                 <h3 id="modalTitle" class="text-xl font-bold">Add Validation Record</h3>
@@ -1102,11 +1102,12 @@ window.openEditModal = (record = {}) => {
     }
 
     // 2. Safely reveal modal on user click
-    const modal = document.getElementById('recordModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('active');
-    }
+   const modal = document.getElementById('recordModal');
+if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
+    modal.classList.add('active');
+}
 };
 ui.recordForm.addEventListener('submit', async (e) => {
     e.preventDefault();
