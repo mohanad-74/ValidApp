@@ -1089,9 +1089,6 @@ window.openEditModal = (recordId) => {
         setVal('version', record.version);
         setVal('scale', record.scale);
         setVal('reason', record.reason);
-    } catch (err) {
-        console.error('Error opening edit modal:', err);
-    }
 };
 
 ui.recordForm.addEventListener('submit', async (e) => {
