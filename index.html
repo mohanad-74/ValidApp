@@ -1087,13 +1087,11 @@ window.openEditModal = (recordId) => {
         setVal('stage', record.stage);
         setVal('studyStatus', record.status);
         setVal('version', record.version);
-        setVal('scale', record.scale);
         setVal('reason', record.reason);
 };
 
 ui.recordForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-
     const id = document.getElementById('recordId').value;
 
     // Retrieve file or preserve existing attachment
