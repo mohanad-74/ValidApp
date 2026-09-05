@@ -330,11 +330,13 @@
                     </div>
                     <div class="flex-grow min-w-[150px]">
                         <label class="block text-xs font-medium text-gray-700 mb-1">Privilege Role *</label>
-                        <select id="newRole" class="w-full p-2 border border-gray-300 rounded text-sm" required>
+                        <select id="newRole" class="w-full p-2 border border-gray-300 rounded text-sm">
                             <option value="Administrator">Administrator (Add/Edit)</option>
+                            <option value="Creator">Creator (Add/Edit Studies)</option>
                             <option value="Section Head">Section Head (Review)</option>
-                            <option value="QA Manager">QA Manager (Approve)</option>
                             <option value="Deputy QA Manager">Deputy QA Manager</option>
+                            <option value="QA Manager">QA Manager (Approve)</option>
+                            <option value="Viewer">Viewer (View)</option>
                         </select>
                     </div>
                     <div>
@@ -906,8 +908,7 @@ const EMAILJS_TEMPLATE_ID = "template_1krwnad";
                 ui.dashboardSection.classList.replace('hidden', 'flex');
                 ui.userInfo.classList.replace('hidden', 'flex');
 
-ui.addRecordBtn.classList.toggle('hidden', !['admin', 'creator'].includes((user.role || '').toLowerCase()));                ui.userManagementBtn.classList.toggle('hidden', user.role !== ROLES.ADMIN);
-                ui.auditTrailBtn.classList.toggle('hidden', user.role !== ROLES.ADMIN && user.role !== ROLES.APPROVER);
+ui.addRecordBtn.classList.toggle('hidden', !(user.role === ROLES.ADMIN || user.role === ROLES.CREATOR || (user.role && ['admin', 'creator'].includes(user.role.toLowerCase()))));
 
                 switchTab(CATEGORIES.PROCESS); 
                 ui.loginForm.reset();
@@ -1235,11 +1236,10 @@ ui.recordForm.addEventListener('submit', async (e) => {
 
             const newUser = { username: newU, password: newP, role: newR };
             if (db) {
-                await setDoc(getDocRef('users', newU), newUser);
-            } else {
-                USERS.push(newUser);
-                renderUserList();
-            }
+        await setDoc(getDocRef('users', newU), newUser);
+    }
+    USERS.push(newUser);
+    renderUserList();
             document.getElementById('userForm').reset();
             showMessage('Success', 'User added successfully.', 'success');
         });
